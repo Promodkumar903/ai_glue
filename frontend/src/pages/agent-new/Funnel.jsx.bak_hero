@@ -1,0 +1,65 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, Alert, ProgressBar, DataTable, Tabs } from '../../components/ui/Components';
+import { agentAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeNum = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function AgentFunnel() {
+  const [funnel, setFunnel] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    agentAPI.funnel()
+      .then((r) => setFunnel(typeof r.data === 'object' && r.data !== null ? r.data : {}))
+      .catch(() => setFunnel({}))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const stages = safeArr(funnel.stages || funnel.funnel || []);
+  const total = safeNum(funnel.total || funnel.total_candidates);
+  const placed = safeNum(funnel.placed || funnel.selected);
+  const conversion = total ? Math.round((placed / total) * 100) : 0;
+
+  const summary = [
+    { label: 'Total Candidates', value: total },
+    { label: 'Placed', value: placed },
+    { label: 'Conversion', value: `${conversion}%` },
+  ];
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="📊" title="Agent Funnel" subtitle="Applications → Shortlist → Interview → Offer → Placed" />
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        {summary.map((s) => (
+          <Card key={s.label} title={s.label} value={s.value} icon="📊" color="blue" />
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-6 mb-6">
+        <h3 className="font-bold mb-4">🎯 Conversion Funnel</h3>
+        {loading && <p className="text-center text-gray-400 py-6">⏳ Loading...</p>}
+        {!loading && stages.length === 0 && <p className="text-center text-gray-400 py-6">📭 No funnel data yet</p>}
+        {!loading && stages.length > 0 && (
+          <div className="space-y-4">
+            {stages.map((s, i) => {
+              const label = typeof s === 'object' ? safeStr(s.stage || s.name || `Stage ${i + 1}`) : safeStr(s);
+              const value = typeof s === 'object' ? safeNum(s.count ?? s.value ?? 0) : 0;
+              const max = typeof stages[0] === 'object' ? safeNum(stages[0].count ?? 100) || 100 : 100;
+              return <ProgressBar key={i} label={label} value={value} max={max} color={['blue','purple','yellow','green','teal'][i % 5]} />;
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

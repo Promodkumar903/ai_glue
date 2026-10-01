@@ -1,0 +1,26 @@
+import React from 'react';
+import { PageHeader } from '../../components/ui/Components';
+
+export default function Scholarships() {
+  const samples = [
+    { name: 'DAAD Scholarship', country: 'Germany', amount: 'Full tuition + stipend' },
+    { name: 'Chevening Scholarship', country: 'UK', amount: 'Full tuition' },
+    { name: 'Fulbright Program', country: 'USA', amount: 'Full tuition + living' },
+    { name: 'Vanier Canada', country: 'Canada', amount: 'CAD 50,000/year' },
+    { name: 'Australia Awards', country: 'Australia', amount: 'Full tuition' },
+  ];
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <PageHeader title="Scholarships" subtitle="Funding opportunities for study abroad" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {samples.map((s, i) => (
+          <div key={i} className="bg-white p-5 rounded-xl border border-slate-200">
+            <p className="font-bold text-slate-800">{s.name}</p>
+            <p className="text-sm text-slate-500 mt-1">{s.country}</p>
+            <p className="text-sm text-emerald-600 font-medium mt-2">{s.amount}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

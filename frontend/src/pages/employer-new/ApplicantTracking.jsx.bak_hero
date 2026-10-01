@@ -1,0 +1,114 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, Tabs, Alert } from '../../components/ui/Components';
+import { companyAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+const STATUS_COLORS = { applied: 'blue', shortlisted: 'purple', interviewed: 'yellow', selected: 'green', hired: 'green', rejected: 'red' };
+
+export default function ApplicantTracking() {
+  const [applicants, setApplicants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('all');
+  const [msg, setMsg] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    companyAPI.allApplicants()
+      .then((r) => setApplicants(safeArr(r.data)))
+      .catch(() => setApplicants([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const updateStatus = async (app, status) => {
+    try {
+      await companyAPI.updateApplicantStatus(app.id, { status });
+      setMsg({ type: 'success', text: `✅ Marked as ${status}` });
+      load();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    }
+  };
+
+  const counts = {
+    all: applicants.length,
+    applied: applicants.filter((a) => ['applied', 'submitted'].includes((a.status || '').toLowerCase())).length,
+    shortlisted: applicants.filter((a) => (a.status || '').toLowerCase() === 'shortlisted').length,
+    interviewed: applicants.filter((a) => (a.status || '').toLowerCase() === 'interviewed').length,
+    selected: applicants.filter((a) => ['selected', 'hired'].includes((a.status || '').toLowerCase())).length,
+    rejected: applicants.filter((a) => (a.status || '').toLowerCase() === 'rejected').length,
+  };
+
+  const filtered = tab === 'all' ? applicants : applicants.filter((a) => {
+    const st = (a.status || '').toLowerCase();
+    if (tab === 'selected') return ['selected', 'hired'].includes(st);
+    return st === tab;
+  });
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="👥" title="Applicant Tracking" subtitle="Review and manage job applications" />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Applicants" value={counts.all} icon="👥" color="blue" />
+        <Card title="Shortlisted" value={counts.shortlisted} icon="⭐" color="purple" />
+        <Card title="Selected" value={counts.selected} icon="✅" color="green" />
+        <Card title="Rejected" value={counts.rejected} icon="❌" color="red" />
+      </div>
+
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'all', label: 'All', icon: '📋', count: counts.all },
+          { id: 'applied', label: 'Applied', icon: '📤', count: counts.applied },
+          { id: 'shortlisted', label: 'Shortlisted', icon: '⭐', count: counts.shortlisted },
+          { id: 'interviewed', label: 'Interviewed', icon: '🎤', count: counts.interviewed },
+          { id: 'selected', label: 'Selected', icon: '✅', count: counts.selected },
+          { id: 'rejected', label: 'Rejected', icon: '❌', count: counts.rejected },
+        ]}
+      />
+
+      <DataTable
+        loading={loading}
+        empty="Koi applicant nahi abhi tak"
+        columns={[
+          { key: 'id', label: 'ID', render: (r) => <span className="font-mono text-xs">{safeStr(r.id || r.application_id)}</span> },
+          { key: 'candidate', label: 'Candidate', render: (r) => <span className="font-semibold">{safeStr(r.candidate_name || r.name || r.user_name)}</span> },
+          { key: 'job', label: 'Applied For', render: (r) => safeStr(r.vacancy_title || r.job_title) },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              return <Badge color={STATUS_COLORS[st] || 'gray'}>{safeStr(r.status, 'N/A')}</Badge>;
+            },
+          },
+          { key: 'match_score', label: 'Match', render: (r) => r.match_score ? <span className="font-bold text-emerald-600">{r.match_score}%</span> : '—' },
+          {
+            key: 'actions', label: 'Actions',
+            render: (r) => (
+              <div className="flex gap-1">
+                <Button size="sm" variant="success" onClick={() => updateStatus(r, 'shortlisted')}>⭐</Button>
+                <Button size="sm" variant="primary" onClick={() => updateStatus(r, 'selected')}>✅</Button>
+                <Button size="sm" variant="danger" onClick={() => updateStatus(r, 'rejected')}>❌</Button>
+              </div>
+            ),
+          },
+        ]}
+        data={filtered}
+      />
+    </div>
+  );
+}

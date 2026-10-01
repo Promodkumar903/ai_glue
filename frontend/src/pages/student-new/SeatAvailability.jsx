@@ -1,0 +1,118 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Dropdown, Alert, ProgressBar } from '../../components/ui/Components';
+import { educationAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeNum = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function SeatAvailability() {
+  const [countries, setCountries] = useState([]);
+  const [universities, setUniversities] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [seats, setSeats] = useState([]);
+  const [countryId, setCountryId] = useState('');
+  const [univId, setUnivId] = useState('');
+  const [courseId, setCourseId] = useState('');
+  const [loading, setLoading] = useState({ c: false, u: false, co: false, s: false });
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLoading((p) => ({ ...p, c: true }));
+    educationAPI.countries().then((r) => setCountries(safeArr(r.data))).catch((e) => setError(e.response?.data?.detail || 'Error')).finally(() => setLoading((p) => ({ ...p, c: false })));
+  }, []);
+
+  useEffect(() => {
+    if (!countryId) return;
+    setUnivId(''); setCourses([]); setSeats([]);
+    setLoading((p) => ({ ...p, u: true }));
+    educationAPI.universities(countryId).then((r) => setUniversities(safeArr(r.data))).catch(() => setUniversities([])).finally(() => setLoading((p) => ({ ...p, u: false })));
+  }, [countryId]);
+
+  useEffect(() => {
+    if (!univId) return;
+    setCourseId(''); setSeats([]);
+    setLoading((p) => ({ ...p, co: true }));
+    educationAPI.courses(univId).then((r) => setCourses(safeArr(r.data))).catch(() => setCourses([])).finally(() => setLoading((p) => ({ ...p, co: false })));
+  }, [univId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    setLoading((p) => ({ ...p, s: true }));
+    educationAPI.intakeSeats(courseId).then((r) => setSeats(safeArr(r.data))).catch(() => setSeats([])).finally(() => setLoading((p) => ({ ...p, s: false })));
+  }, [courseId]);
+
+  const totalSeats = seats.reduce((s, x) => s + safeNum(x.total_seats), 0);
+  const filledSeats = seats.reduce((s, x) => s + safeNum(x.filled_seats), 0);
+  const availableSeats = totalSeats - filledSeats;
+  const fillPct = totalSeats ? Math.round((filledSeats / totalSeats) * 100) : 0;
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="🪑"
+        title="Seat Availability"
+        subtitle="Check open seats in universities & courses"
+        image="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&q=80"
+      />
+
+      {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Seats" value={totalSeats} icon="🪑" color="blue" />
+        <Card title="Filled" value={filledSeats} icon="✅" color="purple" />
+        <Card title="Available" value={availableSeats} icon="🎯" color="green" />
+        <Card title="Fill Rate" value={`${fillPct}%`} icon="📊" color="orange" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
+        <h3 className="font-semibold text-gray-700 mb-3">🔽 Filter by Location & Course</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Dropdown label="Country" value={countryId} onChange={setCountryId} options={countries.map((c) => ({ value: c.id, label: c.name }))} loading={loading.c} placeholder="Select Country" />
+          <Dropdown label="University" value={univId} onChange={setUnivId} options={universities.map((u) => ({ value: u.id, label: u.name }))} loading={loading.u} placeholder="Select University" disabled={!countryId} />
+          <Dropdown label="Course" value={courseId} onChange={setCourseId} options={courses.map((c) => ({ value: c.id, label: c.name }))} loading={loading.co} placeholder="Select Course" disabled={!univId} />
+        </div>
+      </div>
+
+      {seats.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-5 mb-6">
+          <h3 className="font-bold mb-4">📊 Seat Fill Status</h3>
+          <ProgressBar label="Overall Fill Rate" value={filledSeats} max={totalSeats} color={fillPct > 80 ? 'red' : fillPct > 50 ? 'yellow' : 'green'} />
+        </div>
+      )}
+
+      <DataTable
+        loading={loading.s}
+        empty="Course select karo to seats dikhengi"
+        columns={[
+          { key: 'course_name', label: 'Course', render: (r) => safeStr(r.course_name || courses.find((c) => c.id === r.course_id)?.name) },
+          { key: 'intake_year', label: 'Year', render: (r) => safeStr(r.intake_year) },
+          { key: 'total_seats', label: 'Total', render: (r) => <span className="font-semibold">{safeNum(r.total_seats)}</span> },
+          { key: 'filled_seats', label: 'Filled', render: (r) => safeNum(r.filled_seats) },
+          {
+            key: 'available', label: 'Available',
+            render: (r) => {
+              const avail = safeNum(r.total_seats) - safeNum(r.filled_seats);
+              return <span className={`font-bold ${avail > 0 ? 'text-emerald-600' : 'text-red-600'}`}>{avail}</span>;
+            },
+          },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => {
+              const avail = safeNum(r.total_seats) - safeNum(r.filled_seats);
+              return <Badge color={avail > 0 ? 'green' : 'red'}>{avail > 0 ? 'Open' : 'Full'}</Badge>;
+            },
+          },
+        ]}
+        data={seats}
+      />
+    </div>
+  );
+}

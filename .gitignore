@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+.env
+node_modules/
+*_backup*
+*_old/
+*backup*/
+.DS_Store
+bool
+str
+python
+notepad

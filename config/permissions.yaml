@@ -1,0 +1,543 @@
+# ============================================================
+# AI GLUE v8.0 — RBAC PERMISSION MATRIX (Complete — All Roles)
+# ============================================================
+
+permissions:
+
+  # ==================== STUDENT ====================
+  - role: STUDENT
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SELF
+  - role: STUDENT
+    resource: APPLICATION
+    actions: [CREATE, READ, UPDATE, SUBMIT, DELETE]
+    scope: SELF
+  - role: STUDENT
+    resource: DOCUMENT
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SELF
+  - role: STUDENT
+    resource: OFFER
+    actions: [READ, UPDATE, ACCEPT, DECLINE]
+    scope: SELF
+  - role: STUDENT
+    resource: PAYMENT
+    actions: [CREATE, READ]
+    scope: SELF
+  - role: STUDENT
+    resource: VISA_CASE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: STUDENT
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: SELF
+  - role: STUDENT
+    resource: HOUSING
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SELF
+  - role: STUDENT
+    resource: JOB
+    actions: [READ]
+    scope: SELF
+  - role: STUDENT
+    resource: BOOK
+    actions: [READ]
+    scope: SELF
+  - role: STUDENT
+    resource: JOURNEY
+    actions: [READ, UPDATE]
+    scope: SELF
+  - role: STUDENT
+    resource: RECOMMENDATION
+    actions: [READ]
+    scope: SELF
+  - role: STUDENT
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: STUDENT
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== JOB_SEEKER ====================
+  - role: JOB_SEEKER
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: APPLICATION
+    actions: [CREATE, READ, UPDATE, SUBMIT, DELETE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: DOCUMENT
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: OFFER
+    actions: [READ, UPDATE, ACCEPT, DECLINE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: PAYMENT
+    actions: [CREATE, READ]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: VISA_CASE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: JOURNEY
+    actions: [READ, UPDATE]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: RECOMMENDATION
+    actions: [READ]
+    scope: SELF
+  - role: JOB_SEEKER
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: JOB_SEEKER
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== AGENT ====================
+  - role: AGENT
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: AGENT
+    resource: CANDIDATE_PROFILE
+    actions: [READ]
+    scope: CASE
+  - role: AGENT
+    resource: APPLICATION
+    actions: [CREATE, READ, UPDATE, SUBMIT]
+    scope: CASE
+  - role: AGENT
+    resource: DOCUMENT
+    actions: [READ, CREATE, UPDATE]
+    scope: CASE
+  - role: AGENT
+    resource: OFFER
+    actions: [READ, UPDATE]
+    scope: CASE
+  - role: AGENT
+    resource: VISA_CASE
+    actions: [READ, UPDATE]
+    scope: CASE
+  - role: AGENT
+    resource: PAYMENT
+    actions: [READ]
+    scope: CASE
+  - role: AGENT
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: CASE
+  - role: AGENT
+    resource: COMMISSION
+    actions: [READ]
+    scope: SELF
+  - role: AGENT
+    resource: USER_ADMIN
+    actions: [READ]
+    scope: CASE
+  - role: AGENT
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: AGENT
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== BROKER ====================
+  - role: BROKER
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: BROKER
+    resource: CANDIDATE_PROFILE
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: APPLICATION
+    actions: [CREATE, READ, UPDATE, SUBMIT, REJECT, APPROVE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: DOCUMENT
+    actions: [READ, CREATE, UPDATE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: OFFER
+    actions: [READ, UPDATE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: VISA_CASE
+    actions: [READ, UPDATE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: PAYMENT
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: COMMISSION
+    actions: [READ, UPDATE, EXPORT]
+    scope: SELF
+  - role: BROKER
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: AGENT
+    actions: [CREATE, READ, UPDATE, DEACTIVATE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: CLIENT_DISTRIBUTION
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: FINANCIAL
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: REPORT
+    actions: [READ, EXPORT]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: USER_ADMIN
+    actions: [READ, UPDATE]
+    scope: ORGANIZATION
+  - role: BROKER
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: BROKER
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== EMPLOYER ====================
+  - role: EMPLOYER
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: EMPLOYER
+    resource: USER_ADMIN
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: VACANCY
+    actions: [CREATE, READ, UPDATE, PUBLISH, REVOKE]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: OPPORTUNITY
+    actions: [READ, CREATE, UPDATE, PUBLISH, REVOKE]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: EMPLOYER
+    resource: APPLICATION
+    actions: [READ, UPDATE, APPROVE, REJECT]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: OFFER
+    actions: [CREATE, READ, UPDATE, SEND]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: CONTRACT
+    actions: [CREATE, READ, UPDATE, SIGN]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: CANDIDATE_PROFILE
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: ORGANIZATION
+  - role: EMPLOYER
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== RECRUITER (Alias for EMPLOYER) ====================
+  - role: RECRUITER
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE]
+    scope: SELF
+  - role: RECRUITER
+    resource: USER_ADMIN
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: VACANCY
+    actions: [CREATE, READ, UPDATE, PUBLISH, REVOKE]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: OPPORTUNITY
+    actions: [READ, CREATE, UPDATE, PUBLISH, REVOKE]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: OPPORTUNITY
+    actions: [READ]
+    scope: TENANT
+  - role: RECRUITER
+    resource: APPLICATION
+    actions: [READ, UPDATE, APPROVE, REJECT]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: OFFER
+    actions: [CREATE, READ, UPDATE, SEND]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: CONTRACT
+    actions: [CREATE, READ, UPDATE, SIGN]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: CANDIDATE_PROFILE
+    actions: [READ]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: ORGANIZATION
+  - role: RECRUITER
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SELF
+
+  # ==================== ADMIN ====================
+  - role: ADMIN
+    resource: PROFILE
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: USER_ADMIN
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: ORGANIZATION
+    actions: [CREATE, READ, UPDATE, DELETE, VERIFY]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: OPPORTUNITY
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: APPLICATION
+    actions: [READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: OFFER
+    actions: [READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: CONTRACT
+    actions: [READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: VISA_CASE
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: PAYMENT
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: CONNECTOR
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: AUDIT
+    actions: [READ, EXPORT]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: AUDIT_EVENT
+    actions: [READ, EXPORT]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: FRAUD
+    actions: [READ, UPDATE, RESOLVE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: REPORT
+    actions: [CREATE, READ, EXPORT]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: SETTINGS
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: TENANT
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: EVIDENCE
+    actions: [READ, VERIFY, REVOKE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: SOURCE
+    actions: [CREATE, READ, UPDATE, VERIFY]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: MODEL_REGISTRY
+    actions: [READ, APPROVE, REJECT]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: SUPPORT_TICKET
+    actions: [READ, UPDATE, RESOLVE]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: MESSAGE
+    actions: [CREATE, READ]
+    scope: SYSTEM
+  - role: ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== SYSTEM_OWNER ====================
+  - role: SYSTEM_OWNER
+    resource: TENANT
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: SYSTEM_OWNER
+    resource: USER_ADMIN
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: SYSTEM_OWNER
+    resource: BILLING
+    actions: [READ, EXECUTE]
+    scope: SYSTEM
+  - role: SYSTEM_OWNER
+    resource: PLATFORM_CONFIG
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: SYSTEM_OWNER
+    resource: AUDIT_EVENT
+    actions: [READ, EXPORT]
+    scope: SYSTEM
+  - role: SYSTEM_OWNER
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== GOVERNANCE_ADMIN ====================
+  - role: GOVERNANCE_ADMIN
+    resource: EVIDENCE
+    actions: [READ, VERIFY, REVOKE]
+    scope: SYSTEM
+  - role: GOVERNANCE_ADMIN
+    resource: SOURCE
+    actions: [CREATE, READ, UPDATE, VERIFY]
+    scope: SYSTEM
+  - role: GOVERNANCE_ADMIN
+    resource: CONSTITUTION_AMENDMENT
+    actions: [READ, APPROVE, REJECT]
+    scope: SYSTEM
+  - role: GOVERNANCE_ADMIN
+    resource: MODEL_REGISTRY
+    actions: [READ, APPROVE, REJECT]
+    scope: SYSTEM
+  - role: GOVERNANCE_ADMIN
+    resource: AUDIT_EVENT
+    actions: [READ, EXPORT]
+    scope: SYSTEM
+  - role: GOVERNANCE_ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== OPERATIONS_ADMIN ====================
+  - role: OPERATIONS_ADMIN
+    resource: CONNECTOR
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: OPERATIONS_ADMIN
+    resource: ORGANIZATION_VERIFICATION
+    actions: [READ, APPROVE, REJECT]
+    scope: SYSTEM
+  - role: OPERATIONS_ADMIN
+    resource: SUPPORT_TICKET
+    actions: [READ, UPDATE, RESOLVE]
+    scope: SYSTEM
+  - role: OPERATIONS_ADMIN
+    resource: USER_ADMIN
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: OPERATIONS_ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== SECURITY_ADMIN ====================
+  - role: SECURITY_ADMIN
+    resource: SECURITY_EVENT
+    actions: [READ, RESOLVE]
+    scope: SYSTEM
+  - role: SECURITY_ADMIN
+    resource: MFA_CONFIG
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+  - role: SECURITY_ADMIN
+    resource: IP_WHITELIST
+    actions: [CREATE, READ, UPDATE, DELETE]
+    scope: SYSTEM
+  - role: SECURITY_ADMIN
+    resource: AUDIT_EVENT
+    actions: [READ]
+    scope: SYSTEM
+  - role: SECURITY_ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== FINANCE_ADMIN ====================
+  - role: FINANCE_ADMIN
+    resource: INVOICE
+    actions: [CREATE, READ, UPDATE, EXPORT]
+    scope: SYSTEM
+  - role: FINANCE_ADMIN
+    resource: REFUND
+    actions: [READ, APPROVE, REJECT]
+    scope: SYSTEM
+  - role: FINANCE_ADMIN
+    resource: RECONCILIATION
+    actions: [CREATE, READ, UPDATE]
+    scope: SYSTEM
+  - role: FINANCE_ADMIN
+    resource: PAYMENT
+    actions: [READ, EXPORT]
+    scope: SYSTEM
+  - role: FINANCE_ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM
+
+  # ==================== SUPPORT_ADMIN ====================
+  - role: SUPPORT_ADMIN
+    resource: SUPPORT_TICKET
+    actions: [READ, UPDATE, RESOLVE]
+    scope: SYSTEM
+  - role: SUPPORT_ADMIN
+    resource: CASE
+    actions: [READ]
+    scope: SYSTEM
+  - role: SUPPORT_ADMIN
+    resource: USER_ADMIN
+    actions: [READ]
+    scope: SYSTEM
+  - role: SUPPORT_ADMIN
+    resource: NOTIFICATION
+    actions: [READ, UPDATE]
+    scope: SYSTEM

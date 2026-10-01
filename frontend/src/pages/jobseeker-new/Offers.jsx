@@ -1,0 +1,135 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, Alert, Modal, Textarea } from '../../components/ui/Components';
+import { offersAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function Offers() {
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState(null);
+  const [actionModal, setActionModal] = useState(null);
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    offersAPI.status('me')
+      .then((r) => setOffers(safeArr(r.data)))
+      .catch(() => setOffers([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleAccept = async (offer) => {
+    setSubmitting(true);
+    try {
+      await offersAPI.accept({ offer_id: offer.id });
+      setMsg({ type: 'success', text: '✅ Offer accepted!' });
+      load();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    } finally { setSubmitting(false); }
+  };
+
+  const handleDecline = async () => {
+    if (!actionModal) return;
+    setSubmitting(true);
+    try {
+      await offersAPI.decline({ offer_id: actionModal.id, reason });
+      setMsg({ type: 'success', text: 'Offer declined' });
+      setActionModal(null);
+      setReason('');
+      load();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    } finally { setSubmitting(false); }
+  };
+
+  const pending = offers.filter((o) => (o.status || '').toLowerCase() === 'pending');
+  const accepted = offers.filter((o) => (o.status || '').toLowerCase() === 'accepted');
+  const declined = offers.filter((o) => (o.status || '').toLowerCase() === 'declined');
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="🎁"
+        title="Job Offers"
+        subtitle="Review, accept or decline offers from employers"
+        image="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&q=80"
+      />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Offers" value={offers.length} icon="🎁" color="blue" />
+        <Card title="Pending Action" value={pending.length} icon="⏳" color="orange" />
+        <Card title="Accepted" value={accepted.length} icon="✅" color="green" />
+        <Card title="Declined" value={declined.length} icon="❌" color="red" />
+      </div>
+
+      {pending.length > 0 && (
+        <Alert type="warning" title="⏰ Action Required">
+          You have {pending.length} pending offer(s). Please review and respond.
+        </Alert>
+      )}
+
+      <DataTable
+        loading={loading}
+        empty="Koi offer nahi abhi tak"
+        columns={[
+          { key: 'id', label: 'ID', render: (r) => <span className="font-mono text-xs">{safeStr(r.id || r.offer_id)}</span> },
+          { key: 'position', label: 'Position', render: (r) => safeStr(r.position || r.job_title || r.title) },
+          { key: 'company', label: 'Company', render: (r) => safeStr(r.company || r.organization_name) },
+          { key: 'salary', label: 'Salary', render: (r) => r.salary ? <span className="font-bold text-emerald-600">${Number(r.salary).toLocaleString()}</span> : '—' },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              const c = { pending: 'yellow', accepted: 'green', declined: 'red' }[st] || 'gray';
+              return <Badge color={c}>{safeStr(r.status, 'N/A')}</Badge>;
+            },
+          },
+          {
+            key: 'created_at', label: 'Received',
+            render: (r) => (r.created_at || r.sent_at) ? new Date(r.created_at || r.sent_at).toLocaleDateString() : '—',
+          },
+          {
+            key: 'actions', label: 'Action',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              if (st !== 'pending') return <span className="text-xs text-gray-400">—</span>;
+              return (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="success" onClick={() => handleAccept(r)}>✅ Accept</Button>
+                  <Button size="sm" variant="danger" onClick={() => setActionModal(r)}>❌ Decline</Button>
+                </div>
+              );
+            },
+          },
+        ]}
+        data={offers}
+      />
+
+      <Modal open={!!actionModal} onClose={() => { setActionModal(null); setReason(''); }} title="Decline Offer">
+        <p className="text-sm text-gray-600 mb-3">
+          Are you sure you want to decline this offer?
+        </p>
+        <Textarea label="Reason (optional)" value={reason} onChange={setReason} placeholder="Why are you declining?" />
+        <div className="flex gap-2 mt-3">
+          <Button variant="danger" onClick={handleDecline} loading={submitting} fullWidth>❌ Confirm Decline</Button>
+          <Button variant="ghost" onClick={() => { setActionModal(null); setReason(''); }}>Cancel</Button>
+        </div>
+      </Modal>
+    </div>
+  );
+}

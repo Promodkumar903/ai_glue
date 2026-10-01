@@ -1,0 +1,150 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, FileUpload, Alert, Tabs } from '../../components/ui/Components';
+import { documentsAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+const daysUntil = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  const now = new Date();
+  return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+};
+
+export default function DocumentsVault() {
+  const [docs, setDocs] = useState([]);
+  const [expiring, setExpiring] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [tab, setTab] = useState('all');
+  const [msg, setMsg] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    Promise.allSettled([documentsAPI.my(), documentsAPI.expiringSoon()])
+      .then(([d, e]) => {
+        if (d.status === 'fulfilled') setDocs(safeArr(d.value.data));
+        if (e.status === 'fulfilled') setExpiring(safeArr(e.value.data));
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleUpload = async (file, docType = 'other') => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('document_type', docType);
+      await documentsAPI.upload(fd);
+      setMsg({ type: 'success', text: '✅ Uploaded successfully!' });
+      load();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    } finally { setUploading(false); }
+  };
+
+  const verified = docs.filter((d) => d.verified).length;
+  const pending = docs.length - verified;
+
+  const filtered = tab === 'all' ? docs : docs.filter((d) => (d.document_type || d.type || '').toLowerCase().includes(tab));
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="🗂️"
+        title="Documents Vault"
+        subtitle="Passport, Visa, Certificates — secured & verified"
+        image="https://images.unsplash.com/photo-1568667256549-094345857637?w=1600&q=80"
+      />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      {/* Expiry Alerts */}
+      {expiring.length > 0 && (
+        <Alert type="warning" title={`⚠️ ${expiring.length} document(s) expiring soon`}>
+          {expiring.map((d, i) => {
+            const days = daysUntil(d.expiry_date);
+            return (
+              <div key={i} className="text-xs mt-1">
+                • {safeStr(d.document_type || d.type)} — {days != null ? `${days} days left` : 'expiring'}
+              </div>
+            );
+          })}
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Documents" value={docs.length} icon="📁" color="blue" />
+        <Card title="Verified" value={verified} icon="✅" color="green" />
+        <Card title="Pending Verify" value={pending} icon="⏳" color="orange" />
+        <Card title="Expiring Soon" value={expiring.length} icon="⚠️" color="red" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-bold mb-2 text-sm">📄 Upload Resume</h3>
+          <FileUpload label="" accept=".pdf,.doc,.docx" onUpload={(f) => handleUpload(f, 'resume')} loading={uploading} hint="PDF/DOC · max 5MB" />
+        </div>
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-bold mb-2 text-sm">🛂 Upload Passport</h3>
+          <FileUpload label="" accept=".pdf,.jpg,.png" onUpload={(f) => handleUpload(f, 'passport')} loading={uploading} hint="Scan copy" />
+        </div>
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-bold mb-2 text-sm">📜 Upload Certificate</h3>
+          <FileUpload label="" accept=".pdf,.jpg,.png" onUpload={(f) => handleUpload(f, 'certificate')} loading={uploading} hint="Degree / Diploma" />
+        </div>
+      </div>
+
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'all', label: 'All', icon: '📋', count: docs.length },
+          { id: 'resume', label: 'Resumes', icon: '📄', count: docs.filter((d) => (d.document_type || '').toLowerCase().includes('resume')).length },
+          { id: 'passport', label: 'Passport', icon: '🛂', count: docs.filter((d) => (d.document_type || '').toLowerCase().includes('passport')).length },
+          { id: 'certificate', label: 'Certificates', icon: '📜', count: docs.filter((d) => (d.document_type || '').toLowerCase().includes('cert')).length },
+        ]}
+      />
+
+      <DataTable
+        loading={loading}
+        empty="Koi document nahi — upar se upload karo"
+        columns={[
+          { key: 'document_type', label: 'Type', render: (r) => <Badge color="blue">{safeStr(r.document_type || r.type, 'N/A')}</Badge> },
+          { key: 'file_name', label: 'File', render: (r) => safeStr(r.file_name || r.filename || r.name) },
+          {
+            key: 'verified', label: 'Status',
+            render: (r) => <Badge color={r.verified ? 'green' : 'yellow'}>{r.verified ? '✅ Verified' : '⏳ Pending'}</Badge>,
+          },
+          {
+            key: 'expiry_date', label: 'Expiry',
+            render: (r) => {
+              if (!r.expiry_date) return '—';
+              const days = daysUntil(r.expiry_date);
+              const color = days != null && days < 0 ? 'text-red-600' : days != null && days < 30 ? 'text-orange-600' : 'text-gray-700';
+              return (
+                <span className={color}>
+                  {new Date(r.expiry_date).toLocaleDateString()}
+                  {days != null && ` (${days}d)`}
+                </span>
+              );
+            },
+          },
+          { key: 'created_at', label: 'Uploaded', render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString() : '—' },
+        ]}
+        data={filtered}
+      />
+    </div>
+  );
+}

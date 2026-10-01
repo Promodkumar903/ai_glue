@@ -1,0 +1,80 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Alert, Tabs, Button } from '../../components/ui/Components';
+import { agentAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function AgentCandidates() {
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('all');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLoading(true);
+    agentAPI.candidates()
+      .then((r) => setCandidates(safeArr(r.data)))
+      .catch(() => setCandidates([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = tab === 'all' ? candidates : candidates.filter((c) => (c.status || '').toLowerCase() === tab);
+  const selected = candidates.filter((c) => ['selected', 'hired', 'placed'].includes((c.status || '').toLowerCase())).length;
+  const pending = candidates.filter((c) => ['applied', 'pending', 'in_progress'].includes((c.status || '').toLowerCase())).length;
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="👥" title="My Candidates" subtitle="All candidates assigned to you" />
+
+      {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Candidates" value={candidates.length} icon="👥" color="blue" />
+        <Card title="Selected/Placed" value={selected} icon="✅" color="green" />
+        <Card title="In Progress" value={pending} icon="⏳" color="orange" />
+        <Card title="Success Rate" value={candidates.length ? Math.round((selected / candidates.length) * 100) + '%' : '0%'} icon="📊" color="purple" />
+      </div>
+
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'all', label: 'All', icon: '📋', count: candidates.length },
+          { id: 'applied', label: 'Applied', icon: '📤' },
+          { id: 'shortlisted', label: 'Shortlisted', icon: '⭐' },
+          { id: 'selected', label: 'Selected', icon: '✅' },
+          { id: 'rejected', label: 'Rejected', icon: '❌' },
+        ]}
+      />
+
+      <DataTable
+        loading={loading}
+        empty="Koi candidate nahi mila"
+        columns={[
+          { key: 'name', label: 'Candidate', render: (r) => <span className="font-semibold">{safeStr(r.name || r.full_name || r.candidate_name)}</span> },
+          { key: 'email', label: 'Email', render: (r) => safeStr(r.email) },
+          { key: 'phone', label: 'Phone', render: (r) => safeStr(r.phone) },
+          { key: 'country', label: 'Target Country', render: (r) => safeStr(r.country || r.target_country) },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              const c = { selected: 'green', hired: 'green', placed: 'green', rejected: 'red', shortlisted: 'purple', applied: 'blue' }[st] || 'gray';
+              return <Badge color={c}>{safeStr(r.status, 'N/A')}</Badge>;
+            },
+          },
+          { key: 'match_score', label: 'Match', render: (r) => r.match_score ? <span className="font-bold text-emerald-600">{r.match_score}%</span> : '—' },
+        ]}
+        data={filtered}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,102 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, Alert, Tabs } from '../../components/ui/Components';
+import { studentLifeAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function BooksLibrary() {
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('all');
+  const [msg, setMsg] = useState(null);
+
+  const load = () => {
+    setLoading(true);
+    studentLifeAPI.books()
+      .then((r) => setBooks(safeArr(r.data)))
+      .catch(() => setBooks([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleReturn = async (book) => {
+    if (!window.confirm(`Return "${book.title}"?`)) return;
+    try {
+      await studentLifeAPI.returnBook(book.id);
+      setMsg({ type: 'success', text: '✅ Book returned!' });
+      load();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    }
+  };
+
+  const filtered = tab === 'all' ? books : books.filter((b) => (b.status || '').toLowerCase() === tab);
+  const available = books.filter((b) => (b.status || '').toLowerCase() === 'available').length;
+  const borrowed = books.filter((b) => (b.status || '').toLowerCase() === 'borrowed').length;
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="📚"
+        title="Books Library"
+        subtitle="Borrow, return, track your academic books"
+        image="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1600&q=80"
+      />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Books" value={books.length} icon="📚" color="blue" />
+        <Card title="Available" value={available} icon="✅" color="green" />
+        <Card title="Borrowed" value={borrowed} icon="📖" color="orange" />
+        <Card title="Categories" value={[...new Set(books.map((b) => b.category).filter(Boolean))].length} icon="🏷️" color="purple" />
+      </div>
+
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'all', label: 'All Books', icon: '📚', count: books.length },
+          { id: 'available', label: 'Available', icon: '✅', count: available },
+          { id: 'borrowed', label: 'Borrowed', icon: '📖', count: borrowed },
+        ]}
+      />
+
+      <DataTable
+        loading={loading}
+        empty="Koi book nahi library mein"
+        columns={[
+          { key: 'title', label: 'Title', render: (r) => <span className="font-semibold">{safeStr(r.title)}</span> },
+          { key: 'author', label: 'Author', render: (r) => safeStr(r.author) },
+          { key: 'isbn', label: 'ISBN', render: (r) => safeStr(r.isbn, '—') },
+          { key: 'category', label: 'Category', render: (r) => r.category ? <Badge color="blue">{safeStr(r.category)}</Badge> : '—' },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              return <Badge color={st === 'available' ? 'green' : st === 'borrowed' ? 'orange' : 'gray'}>{safeStr(r.status, 'available')}</Badge>;
+            },
+          },
+          {
+            key: 'actions', label: 'Action',
+            render: (r) => {
+              const st = (r.status || '').toLowerCase();
+              if (st !== 'borrowed') return <span className="text-xs text-gray-400">—</span>;
+              return <Button size="sm" variant="warning" onClick={() => handleReturn(r)}>↩ Return</Button>;
+            },
+          },
+        ]}
+        data={filtered}
+      />
+    </div>
+  );
+}

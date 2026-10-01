@@ -1,0 +1,117 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, FileUpload, Alert } from '../../components/ui/Components';
+import { documentsAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function UploadResume() {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const loadDocs = () => {
+    setLoading(true);
+    documentsAPI.my()
+      .then((r) => setDocs(safeArr(r.data)))
+      .catch(() => setDocs([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadDocs(); }, []);
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setMsg({ type: 'danger', text: 'File too large (max 5MB)' });
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('document_type', 'resume');
+      await documentsAPI.upload(fd);
+      setMsg({ type: 'success', text: '✅ Resume uploaded successfully!' });
+      loadDocs();
+    } catch (e) {
+      setMsg({ type: 'danger', text: '❌ ' + (e.response?.data?.detail || e.message) });
+    } finally { setUploading(false); }
+  };
+
+  const resumes = docs.filter((d) => (d.document_type || d.type || '').toLowerCase().includes('resume'));
+  const totalUploaded = docs.length;
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="📄"
+        title="My Resumes & Documents"
+        subtitle="Upload and manage your resumes for AI-powered job matching"
+      />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Documents" value={totalUploaded} icon="📁" color="blue" />
+        <Card title="Resumes" value={resumes.length} icon="📄" color="purple" />
+        <Card title="Verified" value={docs.filter((d) => d.verified).length} icon="✅" color="green" />
+        <Card title="Pending Verify" value={docs.filter((d) => !d.verified).length} icon="⏳" color="orange" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="font-bold mb-3">📤 Upload New Resume</h3>
+          <Alert type="info">
+            Accepted: PDF, DOC, DOCX · Max 5MB · AI will parse skills & experience
+          </Alert>
+          <FileUpload
+            label=""
+            accept=".pdf,.doc,.docx"
+            onUpload={handleUpload}
+            loading={uploading}
+            hint="Click to upload your resume"
+          />
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="font-bold mb-3">💡 Resume Tips</h3>
+          <ul className="text-sm text-gray-600 space-y-2">
+            <li>✅ Use clear section headings</li>
+            <li>✅ Include keywords from target job</li>
+            <li>✅ Add measurable achievements</li>
+            <li>✅ Keep it 1-2 pages</li>
+            <li>✅ Update contact info</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold mb-3">📋 All My Documents</h3>
+      <DataTable
+        loading={loading}
+        empty="Koi document nahi — upar se upload karo"
+        columns={[
+          { key: 'document_type', label: 'Type', render: (r) => <Badge color="blue">{safeStr(r.document_type || r.type, 'N/A')}</Badge> },
+          { key: 'file_name', label: 'File', render: (r) => safeStr(r.file_name || r.filename || r.name) },
+          { key: 'version', label: 'Version', render: (r) => safeStr(r.version, 'v1') },
+          { key: 'size', label: 'Size', render: (r) => r.size ? `${(r.size / 1024).toFixed(1)} KB` : '—' },
+          {
+            key: 'verified', label: 'Verified',
+            render: (r) => <Badge color={r.verified ? 'green' : 'yellow'}>{r.verified ? 'Verified' : 'Pending'}</Badge>,
+          },
+          { key: 'expiry_date', label: 'Expiry', render: (r) => r.expiry_date ? new Date(r.expiry_date).toLocaleDateString() : '—' },
+          { key: 'created_at', label: 'Uploaded', render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString() : '—' },
+        ]}
+        data={docs}
+      />
+    </div>
+  );
+}

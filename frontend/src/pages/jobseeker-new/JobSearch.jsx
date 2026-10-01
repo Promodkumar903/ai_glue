@@ -1,0 +1,147 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Button, Input, Dropdown, Alert } from '../../components/ui/Components';
+import { searchAPI, applicationsAPI } from '../../services/api';
+import { useDebounce } from '../../hooks/useFetch';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+    if (Array.isArray(v.results)) return v.results;
+  }
+  return [];
+};
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function JobSearch() {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const [country, setCountry] = useState('');
+  const [type, setType] = useState('');
+  const [applied, setApplied] = useState({});
+  const [applying, setApplying] = useState(null);
+  const debouncedQuery = useDebounce(query, 500);
+
+  const search = () => {
+    setLoading(true);
+    setError('');
+    const filters = {};
+    if (country) filters.country = country;
+    if (type) filters.type = type;
+    searchAPI.opportunities(debouncedQuery, filters)
+      .then((r) => setJobs(safeArr(r.data)))
+      .catch((e) => {
+        setJobs([]);
+        setError(e.response?.data?.detail || 'Search failed');
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { search(); }, [debouncedQuery, country, type]);
+
+  const handleApply = async (job) => {
+    setApplying(job.id);
+    try {
+      await applicationsAPI.create({ opportunity_id: job.id });
+      setApplied((p) => ({ ...p, [job.id]: true }));
+    } catch (e) {
+      alert('❌ ' + (e.response?.data?.detail || e.message));
+    } finally { setApplying(null); }
+  };
+
+  const countries = [...new Set(jobs.map((j) => j.country).filter(Boolean))];
+  const types = [...new Set(jobs.map((j) => j.type).filter(Boolean))];
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="🔍"
+        title="Find Jobs & Opportunities"
+        subtitle="AI-powered search — 50+ new jobs every week"
+        image="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1600&q=80"
+      />
+
+      {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Available Jobs" value={jobs.length} icon="💼" color="blue" />
+        <Card title="Countries" value={countries.length} icon="🌍" color="purple" />
+        <Card title="Job Types" value={types.length} icon="📋" color="indigo" />
+        <Card title="Applied Today" value={Object.keys(applied).length} icon="✅" color="green" />
+      </div>
+
+      {/* Search & Filters */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-2">
+            <Input
+              label="Search"
+              value={query}
+              onChange={setQuery}
+              placeholder="Job title, company, keywords..."
+            />
+          </div>
+          <Dropdown
+            label="Country"
+            value={country}
+            onChange={setCountry}
+            options={countries.map((c) => ({ value: c, label: c }))}
+            placeholder="All Countries"
+          />
+          <Dropdown
+            label="Type"
+            value={type}
+            onChange={setType}
+            options={types.map((t) => ({ value: t, label: t }))}
+            placeholder="All Types"
+          />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold mb-3">💼 Job Openings ({jobs.length})</h3>
+      <DataTable
+        loading={loading}
+        empty="Koi job nahi mili — filter change karo"
+        columns={[
+          {
+            key: 'title', label: 'Job Title',
+            render: (r) => (
+              <div>
+                <p className="font-semibold text-gray-800">{safeStr(r.title || r.name)}</p>
+                {r.company && <p className="text-xs text-gray-500">{safeStr(r.company)}</p>}
+              </div>
+            ),
+          },
+          { key: 'country', label: 'Country', render: (r) => safeStr(r.country) },
+          { key: 'type', label: 'Type', render: (r) => <Badge color="blue">{safeStr(r.type, 'N/A')}</Badge> },
+          { key: 'salary', label: 'Salary', render: (r) => r.salary ? `$${Number(r.salary).toLocaleString()}` : '—' },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => <Badge color={r.status === 'open' ? 'green' : 'gray'}>{safeStr(r.status, 'open')}</Badge>,
+          },
+          {
+            key: 'actions', label: 'Action',
+            render: (r) => {
+              const isApplied = applied[r.id];
+              return (
+                <Button
+                  size="sm"
+                  variant={isApplied ? 'success' : 'primary'}
+                  disabled={isApplied || applying === r.id}
+                  loading={applying === r.id}
+                  onClick={() => handleApply(r)}
+                >
+                  {isApplied ? '✅ Applied' : '📨 Apply'}
+                </Button>
+              );
+            },
+          },
+        ]}
+        data={jobs}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,78 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, ProgressBar } from '../../components/ui/Components';
+import { brokerAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeNum = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function BrokerAgentLeaderboard() {
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    brokerAPI.agentPerformance()
+      .then((r) => setAgents(safeArr(r.data)))
+      .catch(() => setAgents([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const sorted = [...agents].sort((a, b) => safeNum(b.joined ?? b.hired ?? 0) - safeNum(a.joined ?? a.hired ?? 0));
+  const totalApps = agents.reduce((s, a) => s + safeNum(a.total_apps), 0);
+  const totalHired = agents.reduce((s, a) => s + safeNum(a.joined ?? a.hired), 0);
+  const topAgent = sorted[0];
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="🏆" title="Agent Leaderboard" subtitle="Performance ranking of your agents"
+        image="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&q=80"
+      />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Agents" value={agents.length} icon="👥" color="blue" />
+        <Card title="Total Applications" value={totalApps} icon="📨" color="purple" />
+        <Card title="Total Hired" value={totalHired} icon="✅" color="green" />
+        <Card title="Top Performer" value={safeStr(topAgent?.agent_name || topAgent?.name, '—')} icon="🥇" color="orange" />
+      </div>
+
+      {topAgent && (
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow p-6 mb-6 text-white">
+          <p className="text-sm opacity-90">🥇 Top Agent This Month</p>
+          <h3 className="text-2xl font-bold mt-1">{safeStr(topAgent.agent_name || topAgent.name)}</h3>
+          <div className="flex gap-6 mt-3 text-sm">
+            <span>Applications: <b>{safeNum(topAgent.total_apps)}</b></span>
+            <span>Hired: <b>{safeNum(topAgent.joined ?? topAgent.hired)}</b></span>
+          </div>
+        </div>
+      )}
+
+      <DataTable
+        loading={loading}
+        empty="Koi agent performance data nahi"
+        columns={[
+          { key: 'rank', label: '#', render: (_, i) => <span className="font-bold text-lg">{['🥇','🥈','🥉'][i] || `#${i+1}`}</span>, width: '60px' },
+          { key: 'agent', label: 'Agent', render: (r) => <span className="font-semibold">{safeStr(r.agent_name || r.name || r.agent_id)}</span> },
+          { key: 'total_apps', label: 'Applications', render: (r) => safeNum(r.total_apps) },
+          { key: 'shortlisted', label: 'Shortlisted', render: (r) => safeNum(r.shortlisted) },
+          { key: 'offers', label: 'Offers', render: (r) => safeNum(r.offers) },
+          { key: 'joined', label: 'Joined', render: (r) => <Badge color="green">{safeNum(r.joined ?? r.hired)}</Badge> },
+          {
+            key: 'success_rate', label: 'Success',
+            render: (r) => {
+              const rate = safeNum(r.total_apps) ? Math.round((safeNum(r.joined ?? r.hired) / safeNum(r.total_apps)) * 100) : 0;
+              return <ProgressBar value={rate} max={100} color={rate > 50 ? 'green' : rate > 20 ? 'yellow' : 'red'} />;
+            },
+          },
+        ]}
+        data={sorted}
+      />
+    </div>
+  );
+}

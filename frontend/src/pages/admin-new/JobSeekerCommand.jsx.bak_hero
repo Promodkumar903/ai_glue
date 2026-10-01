@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Tabs, Alert, ProgressBar } from '../../components/ui/Components';
+import { reportingAPI, visaAPI, adminAPI } from '../../services/api';
+
+// 🛡️ Safe helpers — kisi bhi shape ka data handle karega
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+    if (Array.isArray(v.results)) return v.results;
+  }
+  return [];
+};
+const safeNum = (v) => {
+  const n = Number(v);
+  return isFinite(n) ? n : 0;
+};
+const safeStr = (v, fallback = '—') => (v === null || v === undefined || v === '') ? fallback : String(v);
+
+export default function JobSeekerCommand() {
+  const [tab, setTab] = useState('overview');
+  const [funnel, setFunnel] = useState(null);
+  const [visa, setVisa] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+
+    Promise.allSettled([
+      reportingAPI.funnel(),
+      visaAPI.funnel(),
+      adminAPI.users(),
+    ]).then(([f, v, u]) => {
+      if (cancelled) return;
+
+      // Reporting funnel
+      if (f.status === 'fulfilled') {
+        const d = f.value?.data;
+        setFunnel(typeof d === 'object' && d !== null ? d : {});
+      } else {
+        setFunnel({});
+      }
+
+      // Visa funnel
+      if (v.status === 'fulfilled') {
+        const d = v.value?.data;
+        setVisa(typeof d === 'object' && d !== null ? d : {});
+      } else {
+        setVisa({});
+      }
+
+      // Users — filter only Job Seekers
+      if (u.status === 'fulfilled') {
+              const all = safeArr(u.value?.data);
+        setUsers(all.filter((x) => {
+          const roles = Array.isArray(x.roles) ? x.roles : (x.role ? [x.role] : []);
+          const roleStrings = roles.map((r) => String(r).toUpperCase().replace('-', '_'));
+          return roleStrings.includes('JOB_SEEKER') || roleStrings.includes('JOBSEEKER');
+        }));
+      } else {
+        setUsers([]);
+      }
+
+      // Error only if ALL failed
+      if (f.status === 'rejected' && v.status === 'rejected' && u.status === 'rejected') {
+        const msg =
+          f.reason?.response?.data?.detail ||
+          v.reason?.response?.data?.detail ||
+          u.reason?.response?.data?.detail ||
+          'Failed to load data — check backend';
+        setError(String(msg));
+      }
+
+      setLoading(false);
+    }).catch((e) => {
+      if (!cancelled) {
+        setError(String(e?.message || 'Unexpected error'));
+        setLoading(false);
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // 🛡️ Compute safe values
+  const funnelStages = safeArr(funnel?.stages ?? funnel?.funnel ?? funnel?.data);
+  const visaCases = safeArr(visa?.cases ?? visa?.items);
+  const totalJobSeekers = users.length;
+  const totalResumes = safeNum(funnel?.total_resumes ?? funnel?.resumes ?? totalJobSeekers);
+  const selected = safeNum(funnel?.selected ?? funnel?.placed ?? 0);
+  const visaApproved = safeNum(visa?.approved ?? 0);
+  const visaPending = safeNum(visa?.pending ?? 0);
+  const visaRejected = safeNum(visa?.rejected ?? 0);
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="💼"
+        title="Job Seeker Command Center"
+        subtitle="Resumes, Applications, Visa & Placements — Complete 360° View"
+      />
+
+      {error && <Alert type="danger" title="API Error" onClose={() => setError('')}>{error}</Alert>}
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Job Seekers" value={totalJobSeekers} icon="👥" color="blue" />
+        <Card title="Resumes Uploaded" value={totalResumes} icon="📄" color="purple" />
+        <Card title="Selected" value={selected} icon="✅" color="green" />
+        <Card title="Visa Pending" value={visaPending} icon="⏳" color="orange" />
+      </div>
+
+      {/* Tabs */}
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'overview', label: 'Overview', icon: '📊' },
+          { id: 'visa', label: 'Visa Tracker', icon: '🛂', count: visaCases.length },
+          { id: 'users', label: 'All Job Seekers', icon: '👥', count: totalJobSeekers },
+        ]}
+      />
+
+      {/* TAB: Overview */}
+      {tab === 'overview' && (
+        <>
+          <h3 className="text-lg font-bold mb-3">📊 Application Funnel</h3>
+          <div className="bg-white rounded-xl shadow p-5 mb-6">
+            {loading && <p className="text-gray-500 text-sm text-center py-4">⏳ Loading...</p>}
+            {!loading && funnelStages.length === 0 && (
+              <p className="text-gray-500 text-sm text-center py-4">
+                📭 No funnel data yet — backend se data nahi aa raha
+              </p>
+            )}
+            {!loading && funnelStages.length > 0 && (
+              <div className="space-y-3">
+                {funnelStages.map((s, i) => {
+                  const stageName =
+                    (typeof s === 'object' && s !== null && (s.stage || s.name || s.label)) ||
+                    `Stage ${i + 1}`;
+                  const stageCount =
+                    typeof s === 'object' && s !== null ? safeNum(s.count ?? s.value ?? 0) : 0;
+                  const maxCount =
+                    typeof funnelStages[0] === 'object' && funnelStages[0] !== null
+                      ? safeNum(funnelStages[0].count ?? funnelStages[0].value ?? 100) || 100
+                      : 100;
+                  return (
+                    <div key={i}>
+                      <ProgressBar
+                        label={String(stageName)}
+                        value={stageCount}
+                        max={maxCount}
+                        color={['blue', 'purple', 'yellow', 'green'][i % 4]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card title="Visa Approved" value={visaApproved} icon="✅" color="green" />
+            <Card title="Visa Pending" value={visaPending} icon="⏳" color="orange" />
+            <Card title="Visa Rejected" value={visaRejected} icon="❌" color="red" />
+          </div>
+        </>
+      )}
+
+      {/* TAB: Visa Tracker */}
+      {tab === 'visa' && (
+        <>
+          <h3 className="text-lg font-bold mb-3">🛂 Visa Pipeline</h3>
+          <DataTable
+            loading={loading}
+            empty="No visa cases yet"
+            columns={[
+              {
+                key: 'candidate_name', label: 'Candidate',
+                render: (r) => safeStr(r.candidate_name || r.name || r.user_name)
+              },
+              { key: 'country', label: 'Country', render: (r) => safeStr(r.country) },
+              { key: 'visa_type', label: 'Visa Type', render: (r) => safeStr(r.visa_type || r.type) },
+              {
+                key: 'status', label: 'Status',
+                render: (r) => {
+                  const st = String(r.status || '').toLowerCase();
+                  const c = { approved: 'green', pending: 'yellow', rejected: 'red', applied: 'blue' }[st] || 'gray';
+                  return <Badge color={c}>{safeStr(r.status, 'N/A')}</Badge>;
+                },
+              },
+              {
+                key: 'applied_at', label: 'Applied',
+                render: (r) => {
+                  const d = r.applied_at || r.created_at;
+                  return d ? new Date(d).toLocaleDateString() : '—';
+                },
+              },
+            ]}
+            data={visaCases}
+          />
+        </>
+      )}
+
+      {/* TAB: Users */}
+      {tab === 'users' && (
+        <>
+          <h3 className="text-lg font-bold mb-3">👥 All Job Seekers ({totalJobSeekers})</h3>
+          <DataTable
+            loading={loading}
+            empty="No job seekers registered yet"
+            columns={[
+              { key: 'full_name', label: 'Name', render: (r) => safeStr(r.full_name || r.name) },
+              { key: 'email', label: 'Email', render: (r) => safeStr(r.email) },
+              { key: 'phone', label: 'Phone', render: (r) => safeStr(r.phone) },
+              { key: 'country', label: 'Country', render: (r) => safeStr(r.country) },
+              {
+                key: 'status', label: 'Status',
+                render: (r) => <Badge color={r.status === 'active' ? 'green' : 'gray'}>{safeStr(r.status, 'active')}</Badge>,
+              },
+              {
+                key: 'created_at', label: 'Joined',
+                render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString() : '—',
+              },
+            ]}
+            data={users}
+          />
+        </>
+      )}
+    </div>
+  );
+}

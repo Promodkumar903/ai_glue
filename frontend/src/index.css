@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+}
+
+@layer components {
+  .glass-dark {
+    @apply bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  .hero-overlay {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 58, 138, 0.75) 50%, rgba(88, 28, 135, 0.75) 100%);
+  }
+  .btn-3d {
+    @apply relative inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 ease-out shadow-lg active:translate-y-1 hover:-translate-y-0.5;
+  }
+}

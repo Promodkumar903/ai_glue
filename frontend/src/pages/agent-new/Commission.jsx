@@ -1,0 +1,76 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, Alert, ProgressBar } from '../../components/ui/Components';
+import { dealsAPI, reconciliationAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeNum = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function AgentCommission() {
+  const [deals, setDeals] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.allSettled([dealsAPI.myDeals(), reconciliationAPI.summary()])
+      .then(([d, s]) => {
+        if (d.status === 'fulfilled') setDeals(safeArr(d.value.data));
+        if (s.status === 'fulfilled') setSummary(typeof s.value.data === 'object' ? s.value.data : {});
+        setLoading(false);
+      });
+  }, []);
+
+  const totalEarned = safeNum(summary.earned ?? summary.total_earned ?? 0);
+  const totalPending = safeNum(summary.pending ?? summary.total_pending ?? 0);
+  const totalDeals = deals.length;
+  const closedDeals = deals.filter((d) => (d.status || '').toLowerCase() === 'closed').length;
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="💰" title="My Commission" subtitle="Track your earnings and pending payments"
+        image="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&q=80"
+      />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Earned" value={`$${totalEarned.toLocaleString()}`} icon="💰" color="green" />
+        <Card title="Pending" value={`$${totalPending.toLocaleString()}`} icon="⏳" color="orange" />
+        <Card title="Total Deals" value={totalDeals} icon="🤝" color="blue" />
+        <Card title="Closed Deals" value={closedDeals} icon="✅" color="purple" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
+        <h3 className="font-bold mb-4">📊 Earnings Breakdown</h3>
+        <div className="space-y-3">
+          <ProgressBar label="Received" value={totalEarned} max={totalEarned + totalPending || 1} color="green" />
+          <ProgressBar label="Pending" value={totalPending} max={totalEarned + totalPending || 1} color="yellow" />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold mb-3">🤝 My Deals ({deals.length})</h3>
+      <DataTable
+        loading={loading}
+        empty="Koi deal nahi abhi tak"
+        columns={[
+          { key: 'id', label: 'Deal ID', render: (r) => <span className="font-mono text-xs">{safeStr(r.id || r.deal_id)}</span> },
+          { key: 'candidate', label: 'Candidate', render: (r) => safeStr(r.candidate_name || r.candidate_id) },
+          { key: 'job', label: 'Position', render: (r) => safeStr(r.job_title || r.position) },
+          { key: 'amount', label: 'Commission', render: (r) => <span className="font-bold text-emerald-600">${safeNum(r.amount ?? r.commission).toLocaleString()}</span> },
+          {
+            key: 'status', label: 'Status',
+            render: (r) => <Badge color={r.status === 'closed' ? 'green' : r.status === 'pending' ? 'yellow' : 'blue'}>{safeStr(r.status, 'open')}</Badge>,
+          },
+          { key: 'created_at', label: 'Date', render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString() : '—' },
+        ]}
+        data={deals}
+      />
+    </div>
+  );
+}

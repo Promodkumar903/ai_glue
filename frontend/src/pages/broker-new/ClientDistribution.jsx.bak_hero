@@ -1,0 +1,71 @@
+import React, { useState, useEffect } from 'react';
+import { PageHeader, Card, DataTable, Badge, ProgressBar } from '../../components/ui/Components';
+import { brokerAPI } from '../../services/api';
+
+const safeArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.items)) return v.items;
+    if (Array.isArray(v.data)) return v.data;
+  }
+  return [];
+};
+const safeNum = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+const safeStr = (v, fb = '—') => (v == null || v === '') ? fb : String(v);
+
+export default function ClientDistribution() {
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    brokerAPI.clients()
+      .then((r) => setClients(safeArr(r.data)))
+      .catch(() => setClients([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalApps = clients.reduce((s, c) => s + safeNum(c.total_apps), 0);
+  const totalHired = clients.reduce((s, c) => s + safeNum(c.hired), 0);
+  const topClient = [...clients].sort((a, b) => safeNum(b.hired) - safeNum(a.hired))[0];
+
+  return (
+    <div className="p-6">
+      <PageHeader icon="🏢" title="Client Distribution" subtitle="Applications grouped by client organization" />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card title="Total Clients" value={clients.length} icon="🏢" color="blue" />
+        <Card title="Applications" value={totalApps} icon="📨" color="purple" />
+        <Card title="Total Hired" value={totalHired} icon="✅" color="green" />
+        <Card title="Top Client" value={safeStr(topClient?.client_name || topClient?.name, '—')} icon="🥇" color="orange" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
+        <h3 className="font-bold mb-4">📊 Applications per Client</h3>
+        {clients.slice(0, 8).map((c, i) => (
+          <div key={i} className="mb-3">
+            <ProgressBar
+              label={safeStr(c.client_name || c.name || `Client ${i + 1}`)}
+              value={safeNum(c.total_apps)}
+              max={Math.max(...clients.map((x) => safeNum(x.total_apps)), 1)}
+              color="blue"
+            />
+          </div>
+        ))}
+        {clients.length === 0 && <p className="text-center text-gray-400 py-4">No client data</p>}
+      </div>
+
+      <DataTable
+        loading={loading}
+        empty="Koi client data nahi"
+        columns={[
+          { key: 'client_name', label: 'Client', render: (r) => <span className="font-semibold">{safeStr(r.client_name || r.name)}</span> },
+          { key: 'industry', label: 'Industry', render: (r) => safeStr(r.industry, '—') },
+          { key: 'total_apps', label: 'Applications', render: (r) => safeNum(r.total_apps) },
+          { key: 'shortlisted', label: 'Shortlisted', render: (r) => safeNum(r.shortlisted) },
+          { key: 'hired', label: 'Hired', render: (r) => <Badge color="green">{safeNum(r.hired)}</Badge> },
+        ]}
+        data={clients}
+      />
+    </div>
+  );
+}

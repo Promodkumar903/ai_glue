@@ -1,0 +1,37 @@
+import React, { useEffect, useState } from 'react';
+import { PageHeader } from '../../components/ui/Components';
+import api from '../../services/api';
+
+export default function Offers() {
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/offers/my')
+      .then((r) => setOffers(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setOffers([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <PageHeader title="Job Offers" subtitle="Offers received from employers"
+        image="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&q=80"
+      />
+      {loading ? <div className="text-slate-400 py-10 text-center">Loading...</div> : offers.length === 0 ? (
+        <div className="text-center py-10 text-slate-400 bg-white rounded-xl border border-slate-200">
+          No offers yet
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {offers.map((o) => (
+            <div key={o.id} className="bg-white p-5 rounded-xl border border-slate-200">
+              <p className="font-bold text-slate-800">{o.position || o.title || 'Offer'}</p>
+              <p className="text-sm text-slate-500 mt-1">Status: {o.status}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

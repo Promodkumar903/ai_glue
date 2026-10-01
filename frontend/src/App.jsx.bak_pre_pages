@@ -1,0 +1,427 @@
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './lib/auth-context';
+import Search from './pages/Search';
+import StudentJobs from './pages/student/Jobs';
+import StudentHousing from './pages/student/Housing';
+import StudentDocuments from './pages/student/Documents';
+import StudentVisa from './pages/student/Visa';
+import StudentBooks from './pages/student/Books';
+import BrokerAgents from './pages/broker/Agents';
+import BrokerClients from './pages/broker/Clients';
+import EmployerVacancies from './pages/employer/Vacancies';
+import EmployerApplicants from './pages/employer/Applicants';
+import Profile from './pages/Profile';
+import ResumeSearch from './pages/ResumeSearch';
+import StudentMyApplications from './pages/student-new/MyApplications';
+import SeatAvailability from './pages/student-new/SeatAvailability';
+import BooksLibrary from './pages/student-new/BooksLibrary';
+import StudentDocumentsVault from './pages/student-new/DocumentsVault';
+import AgentCandidates from './pages/agent-new/Candidates';
+import AgentFunnel from './pages/agent-new/Funnel';
+import AgentCommission from './pages/agent-new/Commission';
+import ReferralLink from './pages/agent-new/ReferralLink';
+import BrokerAgentLeaderboard from './pages/broker-new/AgentLeaderboard';
+import BrokerCommissionTracker from './pages/broker-new/CommissionTracker';
+import ClientDistribution from './pages/broker-new/ClientDistribution';
+import PostJob from './pages/employer-new/PostJob';
+import ApplicantTracking from './pages/employer-new/ApplicantTracking';
+import Contracts from './pages/employer-new/Contracts';
+import StudyAbroad from './pages/study-abroad/StudyAbroad';
+import WorkAbroad from './pages/work-abroad/WorkAbroad';
+import TrustDirectory from './pages/trust/TrustDirectory';
+// ========== NEW ADMIN PAGES ==========
+import EducationControl from './pages/admin-new/EducationControl';
+import VendorControl from './pages/admin-new/VendorControl';
+import JobSeekerCommand from './pages/admin-new/JobSeekerCommand';
+import StudentCommand from './pages/admin-new/StudentCommand';
+import AgentBrokerCommand from './pages/admin-new/AgentBrokerCommand';
+import RevenueAnalytics from './pages/admin-new/RevenueAnalytics';
+import BulkOperations from './pages/admin-new/BulkOperations';
+import UploadResume from './pages/jobseeker-new/UploadResume';
+import JobSearch from './pages/jobseeker-new/JobSearch';
+import MyApplications from './pages/jobseeker-new/MyApplications';
+import DocumentsVault from './pages/jobseeker-new/DocumentsVault';
+import Offers from './pages/jobseeker-new/Offers';
+import VisaTracker from './pages/jobseeker-new/VisaTracker';
+import Accommodation from './pages/jobseeker-new/Accommodation';
+import ApplyCollege from './pages/student-new/ApplyCollege';
+
+// Layout
+import Sidebar from './components/layouts/Sidebar';
+import Header from './components/layouts/Header';
+
+// Auth Pages
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+
+// Dashboards
+import StudentDashboard from './pages/StudentDashboard';
+import JobSeekerDashboard from './pages/JobSeekerDashboard';
+import AgentDashboard from './pages/AgentDashboard';
+import BrokerDashboard from './pages/BrokerDashboard';
+import EmployerDashboard from './pages/EmployerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+
+// Common
+import Messages from './pages/Messages';
+import SubPage from './pages/SubPage';
+
+// Layout Component
+function Layout() {
+  const { user } = useAuth();
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar role={user?.role || 'STUDENT'} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const { user } = useAuth();
+  const rolePath = user?.role?.toLowerCase().replace('_', '-') || 'student';
+
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={user ? <Navigate to={`/${rolePath}`} /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to={`/${rolePath}`} /> : <Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+              {/* ========== NEW ADMIN ROUTES ========== */}
+      <Route path="/admin/agents-brokers" element={<AgentBrokerCommand />} />
+      <Route path="/admin/revenue" element={<RevenueAnalytics />} />
+      <Route path="/admin/bulk" element={<BulkOperations />} />
+      <Route path="/admin/education" element={<EducationControl />} />
+      <Route path="/admin/vendors" element={<VendorControl />} />
+      <Route path="/admin/jobseekers" element={<JobSeekerCommand />} />
+      <Route path="/admin/students" element={<StudentCommand />} />
+      <Route path="/jobseeker-new/offers" element={<Offers />} />
+      <Route path="/jobseeker-new/visa" element={<VisaTracker />} />
+      <Route path="/jobseeker-new/accommodation" element={<Accommodation />} />
+      <Route path="/student-new/apply" element={<ApplyCollege />} />
+        {/* ========== NEW JOB SEEKER ROUTES ========== */}
+      <Route path="/jobseeker-new/resume" element={<UploadResume />} />
+      <Route path="/jobseeker-new/search" element={<JobSearch />} />
+      <Route path="/jobseeker-new/applications" element={<MyApplications />} />
+      <Route path="/jobseeker-new/documents" element={<DocumentsVault />} />
+    {/* Protected with Layout */}
+      <Route element={user ? <Layout /> : <Navigate to="/login" />}>
+        {/* Dashboards */}
+        <Route path="/student" element={<StudentDashboard />} />
+        <Route path="/job-seeker" element={<JobSeekerDashboard />} />
+        <Route path="/agent" element={<AgentDashboard />} />
+        <Route path="/broker" element={<BrokerDashboard />} />
+        <Route path="/employer" element={<EmployerDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/student/jobs" element={<StudentJobs />} />
+        <Route path="/student/housing" element={<StudentHousing />} />
+        <Route path="/student/documents" element={<StudentDocuments />} />
+        <Route path="/student/visa" element={<StudentVisa />} />
+        <Route path="/student/books" element={<StudentBooks />} />
+        <Route path="/broker/agents" element={<BrokerAgents />} />
+        <Route path="/broker/clients" element={<BrokerClients />} />
+        <Route path="/employer/vacancies" element={<EmployerVacancies />} />
+        <Route path="/employer/applicants" element={<EmployerApplicants />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/resume-search" element={<ResumeSearch />} /> 
+        <Route path="/student-new/applications" element={<StudentMyApplications />} />
+        <Route path="/student-new/seats" element={<SeatAvailability />} />
+        <Route path="/student-new/books" element={<BooksLibrary />} />
+        <Route path="/student-new/documents" element={<StudentDocumentsVault />} /> 
+        <Route path="/study-abroad" element={<StudyAbroad />} />
+        <Route path="/work-abroad" element={<WorkAbroad />} />
+        <Route path="/trust" element={<TrustDirectory />} />
+        {/* ========== NEW AGENT ROUTES ========== */}
+        <Route path="/agent-new/candidates" element={<AgentCandidates />} />
+        <Route path="/agent-new/funnel" element={<AgentFunnel />} />
+        <Route path="/agent-new/commission" element={<AgentCommission />} />
+        <Route path="/agent-new/referral" element={<ReferralLink />} />
+
+        {/* ========== NEW BROKER ROUTES ========== */}
+        <Route path="/broker-new/leaderboard" element={<BrokerAgentLeaderboard />} />
+        <Route path="/broker-new/commission" element={<BrokerCommissionTracker />} />
+        <Route path="/broker-new/clients" element={<ClientDistribution />} />
+
+        {/* ========== NEW EMPLOYER ROUTES ========== */}
+        <Route path="/employer-new/post-job" element={<PostJob />} />
+        <Route path="/employer-new/applicants" element={<ApplicantTracking />} />
+        <Route path="/employer-new/contracts" element={<Contracts />} />
+
+        {/* ========== STUDENT SUB-PAGES ========== */}
+        <Route path="/student/jobs" element={
+          <SubPage
+            title="Jobs & Internships"
+            description="Part-time jobs, internships, and full-time opportunities"
+            endpoint="/search/opportunities?type=VACANCY&limit=50"
+            backPath="/student"
+            columns={[
+              { key: 'title', label: 'Job Title' },
+              { key: 'type', label: 'Type' },
+              { key: 'organization_id', label: 'Organization' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+        <Route path="/student/housing" element={
+          <SubPage
+            title="Housing"
+            description="Available accommodation near your campus"
+            endpoint="/housing/my"
+            backPath="/student"
+            columns={[
+              { key: 'title', label: 'Property' },
+              { key: 'city', label: 'City' },
+              { key: 'rent', label: 'Monthly Rent' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+        <Route path="/student/documents" element={
+          <SubPage
+            title="My Documents"
+            description="Manage your uploaded documents and certificates"
+            endpoint="/documents/my"
+            backPath="/student"
+            columns={[
+              { key: 'type', label: 'Document Type' },
+              { key: 'version', label: 'Version' },
+              { key: 'expiry_date', label: 'Expiry Date' },
+              { key: 'verified', label: 'Verified' },
+            ]}
+          />
+        } />
+        <Route path="/student/visa" element={
+          <SubPage
+            title="Visa Status"
+            description="Track your visa application progress"
+            endpoint="/visa/cases"
+            backPath="/student"
+            columns={[
+              { key: 'country', label: 'Country' },
+              { key: 'visa_type', label: 'Visa Type' },
+              { key: 'status', label: 'Status' },
+              { key: 'applied_at', label: 'Applied At' },
+            ]}
+          />
+        } />
+        <Route path="/student/books" element={
+          <SubPage
+            title="Books Library"
+            description="Books needed for your semester"
+            endpoint="/student-life/books"
+            backPath="/student"
+            columns={[
+              { key: 'title', label: 'Book Title' },
+              { key: 'author', label: 'Author' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+
+        {/* ========== JOB SEEKER SUB-PAGES ========== */}
+        <Route path="/job-seeker/jobs" element={
+          <SubPage
+            title="Job Matches"
+            description="AI-powered job matches for your profile"
+            endpoint="/search/opportunities?type=VACANCY&limit=50"
+            backPath="/job-seeker"
+            columns={[
+              { key: 'title', label: 'Job Title' },
+              { key: 'type', label: 'Type' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+        <Route path="/job-seeker/applications" element={
+          <SubPage
+            title="My Applications"
+            description="Track all your job applications"
+            endpoint="/applications"
+            backPath="/job-seeker"
+            columns={[
+              { key: 'id', label: 'Application ID' },
+              { key: 'status', label: 'Status' },
+              { key: 'match_score', label: 'Match Score' },
+              { key: 'submitted_at', label: 'Submitted At' },
+            ]}
+          />
+        } />
+        <Route path="/job-seeker/documents" element={
+          <SubPage
+            title="My Documents"
+            description="Resume, certificates, and IDs"
+            endpoint="/documents/my"
+            backPath="/job-seeker"
+            columns={[
+              { key: 'type', label: 'Document Type' },
+              { key: 'version', label: 'Version' },
+              { key: 'verified', label: 'Verified' },
+            ]}
+          />
+        } />
+        <Route path="/job-seeker/visa" element={
+          <SubPage
+            title="Work Visa"
+            description="Track your work visa application"
+            endpoint="/visa/cases"
+            backPath="/job-seeker"
+            columns={[
+              { key: 'country', label: 'Country' },
+              { key: 'visa_type', label: 'Visa Type' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+
+        {/* ========== AGENT SUB-PAGES ========== */}
+        <Route path="/agent/candidates" element={
+          <SubPage
+            title="My Candidates"
+            description="All candidates assigned to you"
+            endpoint="/agent/candidates"
+            backPath="/agent"
+            columns={[
+              { key: 'name', label: 'Candidate' },
+              { key: 'status', label: 'Status' },
+              { key: 'email', label: 'Email' },
+            ]}
+          />
+        } />
+        <Route path="/agent/funnel" element={
+          <SubPage
+            title="Agent Funnel"
+            description="Applications, shortlists, interviews, offers"
+            endpoint="/agent/funnel"
+            backPath="/agent"
+            columns={[
+              { key: 'stage', label: 'Stage' },
+              { key: 'count', label: 'Count' },
+            ]}
+          />
+        } />
+
+        {/* ========== BROKER SUB-PAGES ========== */}
+        <Route path="/broker/agents" element={
+          <SubPage
+            title="Agent Performance"
+            description="Performance metrics of all your agents"
+            endpoint="/broker/agents/performance"
+            backPath="/broker"
+            columns={[
+              { key: 'agent_name', label: 'Agent' },
+              { key: 'total_apps', label: 'Total Apps' },
+              { key: 'shortlisted', label: 'Shortlisted' },
+              { key: 'offers', label: 'Offers' },
+              { key: 'joined', label: 'Joined' },
+            ]}
+          />
+        } />
+        <Route path="/broker/clients" element={
+          <SubPage
+            title="Client Distribution"
+            description="Applications by client organization"
+            endpoint="/broker/clients"
+            backPath="/broker"
+            columns={[
+              { key: 'client_name', label: 'Client' },
+              { key: 'total_apps', label: 'Applications' },
+              { key: 'shortlisted', label: 'Shortlisted' },
+              { key: 'hired', label: 'Hired' },
+            ]}
+          />
+        } />
+
+        {/* ========== EMPLOYER SUB-PAGES ========== */}
+        <Route path="/employer/vacancies" element={
+          <SubPage
+            title="My Vacancies"
+            description="All your posted job vacancies"
+            endpoint="/company/vacancy"
+            backPath="/employer"
+            columns={[
+              { key: 'title', label: 'Vacancy Title' },
+              { key: 'type', label: 'Type' },
+              { key: 'status', label: 'Status' },
+            ]}
+          />
+        } />
+        <Route path="/employer/applicants" element={
+          <SubPage
+            title="All Applicants"
+            description="Candidates who applied to your vacancies"
+            endpoint="/company/applicants/all"
+            backPath="/employer"
+            columns={[
+              { key: 'id', label: 'Application ID' },
+              { key: 'status', label: 'Status' },
+              { key: 'match_score', label: 'Match Score' },
+              { key: 'submitted_at', label: 'Applied At' },
+            ]}
+          />
+        } />
+
+        {/* ========== ADMIN SUB-PAGES ========== */}
+        <Route path="/admin/users" element={
+          <SubPage
+            title="User Management"
+            description="All registered users on the platform"
+            endpoint="/admin/users"
+            backPath="/admin"
+            columns={[
+              { key: 'email', label: 'Email' },
+              { key: 'full_name', label: 'Full Name' },
+              { key: 'status', label: 'Status' },
+              { key: 'created_at', label: 'Created At' },
+            ]}
+          />
+        } />
+        <Route path="/admin/organizations" element={
+          <SubPage
+            title="Organizations"
+            description="All companies and institutions"
+            endpoint="/admin/organizations"
+            backPath="/admin"
+            columns={[
+              { key: 'name', label: 'Organization' },
+              { key: 'type', label: 'Type' },
+              { key: 'verification_status', label: 'Verification' },
+            ]}
+          />
+        } />
+        <Route path="/admin/audit" element={
+          <SubPage
+            title="Audit Logs"
+            description="Immutable log of all system actions"
+            endpoint="/admin/audit"
+            backPath="/admin"
+            columns={[
+              { key: 'actor_id', label: 'Actor' },
+              { key: 'action', label: 'Action' },
+              { key: 'target_type', label: 'Target' },
+              { key: 'timestamp', label: 'Timestamp' },
+            ]}
+          />
+        } />
+
+        {/* ========== COMMON ========== */}
+        <Route path="/messages" element={<Messages />} />
+      </Route>
+
+      {/* Default */}
+      <Route path="/" element={<Navigate to={user ? `/${rolePath}` : '/login'} />} />
+      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="/search" element={<Search />} />
+    </Routes>
+  );
+}
+
+export default App;

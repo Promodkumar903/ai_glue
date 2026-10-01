@@ -1,0 +1,131 @@
+import React, { useState } from 'react';
+import { PageHeader, Card, Button, FileUpload, Alert, DataTable, Badge } from '../../components/ui/Components';
+import { bulkAPI } from '../../services/api';
+
+export default function BulkOperations() {
+  const [msg, setMsg] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [log, setLog] = useState([]);
+
+  const addLog = (text, type = 'info') => {
+    setLog((prev) => [{ text, type, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
+  };
+
+  const downloadBlob = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportUsers = async () => {
+    try {
+      addLog('Exporting users...');
+      const res = await bulkAPI.exportUsers();
+      downloadBlob(res.data, `users_${Date.now()}.csv`);
+      addLog('✅ Users exported successfully', 'success');
+      setMsg({ type: 'success', text: 'Users CSV downloaded' });
+    } catch (e) {
+      addLog('❌ Export failed: ' + (e.response?.data?.detail || e.message), 'error');
+      setMsg({ type: 'danger', text: 'Export failed' });
+    }
+  };
+
+  const handleExportApplications = async () => {
+    try {
+      addLog('Exporting applications...');
+      const res = await bulkAPI.exportApplications();
+      downloadBlob(res.data, `applications_${Date.now()}.csv`);
+      addLog('✅ Applications exported', 'success');
+      setMsg({ type: 'success', text: 'Applications CSV downloaded' });
+    } catch (e) {
+      addLog('❌ Export failed: ' + (e.response?.data?.detail || e.message), 'error');
+      setMsg({ type: 'danger', text: 'Export failed' });
+    }
+  };
+
+  const handleImportOpportunities = async (file) => {
+    if (!file) return;
+    setImporting(true);
+    try {
+      addLog(`Importing ${file.name}...`);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await bulkAPI.importOpportunities(formData);
+      addLog(`✅ Imported: ${JSON.stringify(res.data)}`, 'success');
+      setMsg({ type: 'success', text: `Imported: ${res.data?.imported ?? res.data?.count ?? 'OK'}` });
+    } catch (e) {
+      addLog('❌ Import failed: ' + (e.response?.data?.detail || e.message), 'error');
+      setMsg({ type: 'danger', text: 'Import failed' });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        icon="📦"
+        title="Bulk Operations"
+        subtitle="Import / Export data — CSV operations & automation"
+        image="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&q=80"
+      />
+
+      {msg && <Alert type={msg.type} onClose={() => setMsg(null)}>{msg.text}</Alert>}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-5">
+          <p className="text-3xl mb-2">📤</p>
+          <h3 className="font-bold mb-1">Export Users</h3>
+          <p className="text-xs text-gray-500 mb-4">Download all users as CSV</p>
+          <Button onClick={handleExportUsers} fullWidth>📥 Download Users CSV</Button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-5">
+          <p className="text-3xl mb-2">📤</p>
+          <h3 className="font-bold mb-1">Export Applications</h3>
+          <p className="text-xs text-gray-500 mb-4">Download all applications as CSV</p>
+          <Button onClick={handleExportApplications} fullWidth>📥 Download Applications CSV</Button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-5">
+          <p className="text-3xl mb-2">📥</p>
+          <h3 className="font-bold mb-1">Import Opportunities</h3>
+          <p className="text-xs text-gray-500 mb-4">Upload CSV with jobs/opportunities</p>
+          <FileUpload
+            label=""
+            accept=".csv"
+            onUpload={handleImportOpportunities}
+            loading={importing}
+            hint="CSV format: title, type, country, salary"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card title="Users Export" subtitle="Includes all roles" icon="👥" color="blue" />
+        <Card title="Applications Export" subtitle="Status + match score" icon="📄" color="purple" />
+        <Card title="Bulk Import" subtitle="CSV → live data" icon="📦" color="orange" />
+      </div>
+
+      <h3 className="text-lg font-bold mb-3">📋 Operation Log</h3>
+      <div className="bg-white rounded-xl shadow p-4 max-h-80 overflow-y-auto">
+        {log.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">No operations yet — try exporting</p>
+        ) : (
+          log.map((l, i) => (
+            <div key={i} className={`text-sm py-1.5 border-b last:border-0 font-mono ${
+              l.type === 'error' ? 'text-red-600' : l.type === 'success' ? 'text-emerald-600' : 'text-gray-700'
+            }`}>
+              <span className="text-xs text-gray-400 mr-2">[{l.time}]</span>{l.text}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
