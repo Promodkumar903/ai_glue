@@ -15,6 +15,7 @@ email-validator
 psycopg2-binary
 psycopg
 requests
+pyyaml
 python-dateutil
 pytz
 apscheduler
