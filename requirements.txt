@@ -16,6 +16,7 @@ psycopg2-binary
 psycopg
 requests
 pyyaml
+pyotp
 python-dateutil
 pytz
 apscheduler
