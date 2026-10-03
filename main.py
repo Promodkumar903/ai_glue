@@ -1,4 +1,11 @@
-""" 
+# ========== FORCE CREATE TABLES ==========
+import core.database
+from core.database import Base, db as database_instance
+Base.metadata.create_all(bind=database_instance.engine)
+print("✅ Tables created successfully!")
+# ==========================================
+
+"""" 
 AI GLUE — Main FastAPI App (Blueprint Section 6.3)
 With Complete RBAC Enforcement + Audit + Multi-Tenant Middleware 
 + Security Hardening (Rate Limiting, Secure Headers)
