@@ -101,15 +101,13 @@ def get_my_profile(token: str = Depends(oauth2_scheme), session: Session = Depen
     return {"id": user.id, "email": user.email, "full_name": user.full_name, "phone": user.phone}
 
 # ========== CORS ==========
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "https://ai-glue-frontend.vercel.app",
-    "*",
-],
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "https://ai-glue-frontend.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
