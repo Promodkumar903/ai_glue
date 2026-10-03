@@ -5,6 +5,7 @@ Base.metadata.create_all(bind=database_instance.engine)
 print("✅ Tables created successfully!")
 # ==========================================
 
+
 """" 
 AI GLUE — Main FastAPI App (Blueprint Section 6.3)
 With Complete RBAC Enforcement + Audit + Multi-Tenant Middleware 
@@ -103,7 +104,12 @@ def get_my_profile(token: str = Depends(oauth2_scheme), session: Session = Depen
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "https://ai-glue-frontend.vercel.app",
+    "*",
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
