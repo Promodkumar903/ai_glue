@@ -1,18 +1,18 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ✅ Request interceptor — token har request mein bhejo
+// âœ… Request interceptor â€” token har request mein bhejo
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ✅ Response interceptor — 401 pe refresh karo, phir retry
+// âœ… Response interceptor â€” 401 pe refresh karo, phir retry
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -32,15 +32,15 @@ api.interceptors.response.use(
             { params: { refresh_token: refresh } }
           );
           const newToken = res.data.access_token;
-          localStorage.setItem('token', newToken);
+          localStorage.setItem('access_token', newToken);
           if (res.data.refresh_token) {
             localStorage.setItem('refresh_token', res.data.refresh_token);
           }
           original.headers.Authorization = `Bearer ${newToken}`;
           return api(original);
         } catch (e) {
-          // Refresh bhi fail — logout
-          localStorage.removeItem('token');
+          // Refresh bhi fail â€” logout
+          localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');
           localStorage.removeItem('role');
@@ -49,8 +49,8 @@ api.interceptors.response.use(
           }
         }
       } else {
-        // Refresh token nahi hai — logout
-        localStorage.removeItem('token');
+        // Refresh token nahi hai â€” logout
+        localStorage.removeItem('access_token');
         localStorage.removeItem('user');
         localStorage.removeItem('role');
         if (window.location.pathname !== '/login') {

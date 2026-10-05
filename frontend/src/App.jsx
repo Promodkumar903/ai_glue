@@ -45,6 +45,10 @@ import { useLocation } from 'react-router-dom';
 import { trackPageView } from './lib/analytics';
 import TrustDirectory from './pages/trust/TrustDirectory';
 import MyPayments from './pages/MyPayments';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 // ========== NEW ADMIN PAGES ==========
 import EducationControl from './pages/admin-new/EducationControl';
 import VendorControl from './pages/admin-new/VendorControl';
@@ -130,6 +134,10 @@ function App() {
     <Routes>
       {/* Public */}
       <Route path="/login" element={user ? <Navigate to={`/${rolePath}`} /> : <Login />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/contact" element={<ContactUs />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       <Route path="/register" element={user ? <Navigate to={`/${rolePath}`} /> : <Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -156,6 +164,7 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/my-subscription" element={<MySubscription />} />
         <Route path="/my-payments" element={<MyPayments />} />
+        
         <Route path="/admin/revenue" element={<AdminRevenue />} />
         <Route path="/admin/payment-settings" element={<AdminPaymentSettings />} />
         <Route path="/admin/pending-payments" element={<AdminPendingPayments />} />

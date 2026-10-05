@@ -63,6 +63,9 @@ export default function Header({ onMenuClick }) {
         <Menu className="w-5 h-5" />
       </button>
 
+      {/* ===== Logo ===== */}
+      <img src="/logo.svg" alt="AI Glue" className="h-8 w-auto shrink-0 hidden md:block" />
+
       {/* ===== Search Bar ===== */}
       <div className="flex items-center gap-2 flex-1 max-w-xl">
         <div className="relative w-full">

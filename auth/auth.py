@@ -1,5 +1,5 @@
 # ============================================================
-# AI GLUE v8.0 — AUTH ENGINE (FINAL WORKING WITH ROLE)
+# AI GLUE v8.1 — AUTH ENGINE (STRICT RBAC + SECURE REGISTER)
 # ============================================================
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
@@ -27,31 +27,45 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-    role: Optional[str] = "STUDENT"   # ✅ Frontend से Role आएगा
+    role: Optional[str] = "STUDENT"
 
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    role: Optional[str] = "STUDENT"
 
-# ---------- Helper Functions ----------
+# ---------- Helpers ----------
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
 
-# Valid Roles List
-VALID_ROLES = ["STUDENT", "JOB_SEEKER", "AGENT", "BROKER", "RECRUITER", "EMPLOYER", "ADMIN",
-               "BROKER_OWNER", "BROKER_MANAGER", "BROKER_AGENT",
-               "ORG_OWNER", "ORG_ADMIN", "ADMISSIONS_OFFICER",
-               "SYSTEM_OWNER", "GOVERNANCE_ADMIN", "OPERATIONS_ADMIN",
-               "SECURITY_ADMIN", "FINANCE_ADMIN", "SUPPORT_ADMIN"]
+SIGNUP_ROLES = ["STUDENT", "JOB_SEEKER", "AGENT", "BROKER", "EMPLOYER"]
 
-# ---------- Register Endpoint ----------
+VALID_ROLES = [
+    "STUDENT", "JOB_SEEKER", "AGENT", "BROKER", "RECRUITER", "EMPLOYER",
+    "ADMIN", "SUB_ADMIN",
+    "BROKER_OWNER", "BROKER_MANAGER", "BROKER_AGENT",
+    "ORG_OWNER", "ORG_ADMIN", "ADMISSIONS_OFFICER",
+    "SYSTEM_OWNER", "GOVERNANCE_ADMIN", "OPERATIONS_ADMIN",
+    "SECURITY_ADMIN", "FINANCE_ADMIN", "SUPPORT_ADMIN",
+    "VENDOR_ADMIN", "EDU_ADMIN", "JOB_ADMIN"
+]
+
+# ---------- Register (Signup Whitelist) ----------
 @router.post("/register", response_model=dict)
-def register_user(user_data: UserCreate, session: Session = Depends(db.get_session)):
-    """Register a new user."""
+def register_user(
+    user_data: UserCreate,
+    role: str = "STUDENT",
+    session: Session = Depends(db.get_session)
+):
+    """Register — only public roles. Admin signup BLOCKED."""
+    selected_role = (role or "STUDENT").upper().strip()
+    if selected_role not in SIGNUP_ROLES:
+        selected_role = "STUDENT"
+
     existing = session.query(User).filter(User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -72,33 +86,31 @@ def register_user(user_data: UserCreate, session: Session = Depends(db.get_sessi
     session.commit()
     session.refresh(new_user)
 
-    # Default role — STUDENT
-    default_role = UserRole(user_id=new_user.id, role_code='STUDENT')
-    session.add(default_role)
+    user_role = UserRole(user_id=new_user.id, role_code=selected_role)
+    session.add(user_role)
     session.commit()
 
-    return {"id": new_user.id, "email": new_user.email, "message": "User registered successfully"}
+    return {
+        "id": new_user.id,
+        "email": new_user.email,
+        "role": selected_role,
+        "message": "User registered successfully"
+    }
 
-# ---------- Login Endpoint (with Role) ----------
+# ---------- Login (Strict Role Check) ----------
 @router.post("/login", response_model=TokenResponse)
 async def login_user(request: Request, session: Session = Depends(db.get_session)):
-    """
-    Login with email + password + optional role.
-    The selected role is embedded in the JWT as 'active_role'.
-    RBAC will use this role for permission checks.
-    """
-    # Parse Body — JSON या Query Params
+    """Login — user ke paas selected role HONA chahiye."""
     try:
         body = await request.json()
         email = body.get('email')
         password = body.get('password')
         role = body.get('role', 'STUDENT')
-    except:
+    except Exception:
         email = None
         password = None
         role = 'STUDENT'
 
-    # Fallback to query parameters
     if not email:
         email = request.query_params.get('email')
     if not password:
@@ -109,10 +121,9 @@ async def login_user(request: Request, session: Session = Depends(db.get_session
     if not email or not password:
         raise HTTPException(status_code=422, detail="Email and password required")
 
-    # Validate role
-    role = role.upper()
+    role = (role or 'STUDENT').upper()
     if role not in VALID_ROLES:
-        role = 'STUDENT'   # Fallback to STUDENT if invalid role
+        role = 'STUDENT'
 
     user = session.query(User).filter(User.email == email).first()
     if not user:
@@ -122,17 +133,33 @@ async def login_user(request: Request, session: Session = Depends(db.get_session
     if user.status != 'ACTIVE':
         raise HTTPException(status_code=403, detail="Account is not active")
 
-    # ✅ JWT में active_role Embed करो
+    # STRICT ROLE CHECK
+    has_role = session.query(UserRole).filter(
+        UserRole.user_id == user.id,
+        UserRole.role_code == role
+    ).first()
+
+    if not has_role:
+        all_roles = session.query(UserRole).filter(UserRole.user_id == user.id).all()
+        assigned = [r.role_code for r in all_roles]
+        raise HTTPException(
+            status_code=403,
+            detail=f"Aapka account '{role}' role ke liye register nahi hai. "
+                   f"Aap ye roles use kar sakte ho: {', '.join(assigned) if assigned else 'None'}. "
+                   f"Sahi role select karo ya naya account banao."
+        )
+
     access_token = create_access_token(data={"sub": user.id, "active_role": role})
     refresh_token = create_refresh_token(data={"sub": user.id, "active_role": role})
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "role": role
     }
 
-# ---------- Refresh & Logout ----------
+# ---------- Refresh ----------
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_access_token(refresh_token: str, session: Session = Depends(db.get_session)):
     payload = verify_token(refresh_token)
@@ -146,10 +173,15 @@ def refresh_access_token(refresh_token: str, session: Session = Depends(db.get_s
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # ✅ Role Preserve करो
     new_access = create_access_token(data={"sub": user_id, "active_role": active_role})
-    return {"access_token": new_access, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {
+        "access_token": new_access,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "role": active_role
+    }
 
+# ---------- Logout ----------
 @router.post("/logout")
 def logout_user():
     return {"message": "Logged out successfully"}

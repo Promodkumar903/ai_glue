@@ -29,11 +29,15 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await login(email, password, selectedRole);
-      const path = `/${selectedRole.toLowerCase().replace('_', '-')}`;
+      const result = await login(email, password, selectedRole);
+      const actualRole = result?.role || selectedRole;
+      const path = `/${actualRole.toLowerCase().replace('_', '-')}`;
       navigate(path);
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      const msg = err.response?.data?.detail
+        || err.message
+        || 'Login failed. Please check your credentials.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -50,24 +54,24 @@ export default function Login() {
           backgroundImage: `url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&q=80')`,
         }}
       />
-      {/* Dark Overlay */}
       <div className="absolute inset-0 hero-overlay" />
 
       {/* Animated Orbs */}
       <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-pulse"></div>
       <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-pulse"></div>
 
-      {/* Main Glass Card */}
+      {/* Main Card */}
       <div className="relative w-full max-w-6xl glass-dark p-8 md:p-12 animate-fade-in-up">
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/50">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-5xl font-extrabold text-white tracking-tight">AI Glue</h1>
-          </div>
+          <div className="flex items-center justify-center mb-3">
+           <img 
+             src="/logo-dark.svg" 
+             alt="AI Glue" 
+             className="h-20 w-auto"
+           />
+         </div>
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-mono text-gray-200 backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
             v8.1 Enterprise
@@ -75,7 +79,9 @@ export default function Login() {
           <p className="text-gray-300 text-base mt-4">Manpower + Education Unified Platform</p>
         </div>
 
+        {/* Grid: Roles + Login Form */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
           {/* Left: Role Selection */}
           <div className="lg:col-span-3">
             <p className="text-sm font-semibold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -129,20 +135,22 @@ export default function Login() {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-400/30 rounded-lg text-red-200 text-sm">
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-400/30 rounded-lg text-red-200 text-sm whitespace-pre-wrap">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">Email Address</label>
+                <label className="block text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="email"
                     name="email"
-                    autoComplete="off"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -153,13 +161,15 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">Password</label>
+                <label className="block text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="password"
-                    name="password"
-                    autoComplete="new-password"
+                    name="current-password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -169,7 +179,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* 3D Login Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -179,16 +188,23 @@ export default function Login() {
                 {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
               </button>
 
-                            <div className="text-center space-y-2">
+              <div className="text-center space-y-2">
                 <a href="/forgot-password" className="text-sm text-yellow-300 hover:text-yellow-200 transition-colors block">
                   Forgot Password?
                 </a>
-                <p className="text-sm text-gray-300">
-                  New user?{' '}
-                  <a href="/register" className="text-blue-300 hover:text-blue-200 underline transition-colors font-semibold">
-                    Create an Account
-                  </a>
-                </p>
+
+                {selectedRole !== 'ADMIN' ? (
+                  <p className="text-sm text-gray-300">
+                    New user?{' '}
+                    <a href="/register" className="text-blue-300 hover:text-blue-200 underline transition-colors font-semibold">
+                      Create an Account
+                    </a>
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">
+                    Admin accounts managed by existing admins
+                  </p>
+                )}
               </div>
 
               <p className="text-center text-[10px] text-gray-400 pt-3 flex items-center justify-center gap-2 border-t border-white/10">
@@ -199,9 +215,18 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer with Legal Links */}
         <div className="mt-8 text-center text-xs text-gray-400 border-t border-white/10 pt-6">
-          © 2026 AI Glue Systems • Deployed with ❤️ for Manpower & Education
+          <div className="flex items-center justify-center gap-4 flex-wrap mb-3">
+            <a href="/about" className="hover:text-white transition">About Us</a>
+            <span className="text-white/20">•</span>
+            <a href="/contact" className="hover:text-white transition">Contact</a>
+            <span className="text-white/20">•</span>
+            <a href="/privacy" className="hover:text-white transition">Privacy Policy</a>
+            <span className="text-white/20">•</span>
+            <a href="/terms" className="hover:text-white transition">Terms of Service</a>
+          </div>
+          © 2026 AI Glue Systems • Deployed with love for Manpower & Education
         </div>
       </div>
     </div>

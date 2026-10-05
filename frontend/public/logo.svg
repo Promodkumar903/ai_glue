@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120" fill="none">
+  <defs>
+    <linearGradient id="ag-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="55%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Circle -->
+  <circle cx="55" cy="60" r="42" stroke="url(#ag-grad)" stroke-width="11" fill="none"/>
+
+  <!-- Right Circle -->
+  <circle cx="97" cy="60" r="42" stroke="url(#ag-grad)" stroke-width="11" fill="none" opacity="0.55"/>
+
+  <!-- Wordmark -->
+  <text x="170" y="80"
+        font-family="Inter, -apple-system, system-ui, sans-serif"
+        font-size="62"
+        font-weight="800"
+        fill="#0f172a"
+        letter-spacing="-2.5">AI Glue</text>
+</svg>

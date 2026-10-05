@@ -1,77 +1,66 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/axios';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user from localStorage on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedRole = localStorage.getItem('role');
-
-    if (token) {
-      api.get('/profile/me')
-        .then(res => {
-          const userData = res.data;
-          userData.role = savedRole || 'STUDENT';
-          localStorage.setItem('user', JSON.stringify(userData));
-          setUser(userData);
-        })
-        .catch(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('user');
-          localStorage.removeItem('refresh_token');
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    const token = localStorage.getItem('access_token');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Failed to parse stored user');
+      }
     }
+    setLoading(false);
   }, []);
 
-  const login = async (email, password, role) => {
+  // Login
+  const login = async (email, password, role = 'STUDENT') => {
     const res = await api.post('/auth/login', { email, password, role });
 
-    localStorage.setItem('token', res.data.access_token);
-    if (res.data.refresh_token) {
-      localStorage.setItem('refresh_token', res.data.refresh_token);
-    }
-    if (role) {
-      localStorage.setItem('role', role);
+    const { access_token, refresh_token, role: returnedRole } = res.data;
+
+    // Save tokens
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+
+    // Fetch user profile with the new token
+    let userData = null;
+    try {
+      const profileRes = await api.get('/profile/me', {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      userData = profileRes.data;
+    } catch (e) {
+      console.error('Failed to fetch profile');
     }
 
-    let userData;
-    if (res.data.user) {
-      userData = res.data.user;
-      userData.role = role || localStorage.getItem('role') || 'STUDENT';
-    } else {
-      const profile = await api.get('/profile/me');
-      userData = profile.data;
-      userData.role = role || localStorage.getItem('role') || 'STUDENT';
-    }
+    // Build user object with role
+    const finalUser = {
+      ...(userData || {}),
+      role: returnedRole || role,
+    };
 
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    return res.data;
+    setUser(finalUser);
+    localStorage.setItem('user', JSON.stringify(finalUser));
+
+    // Return role so Login.jsx can redirect correctly
+    return { role: finalUser.role };
   };
 
+  // Logout
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/login';
   };
 
   return (
@@ -79,6 +68,10 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+}

@@ -152,17 +152,11 @@ export default function Sidebar({ role = 'STUDENT', isOpen, onClose }) {
       `}>
         {/* Logo */}
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">AI Glue</h1>
-              <p className="text-xs text-slate-400">{role}</p>
-            </div>
+          <div className="flex flex-col gap-1">
+            <img src="/logo-dark.svg" alt="AI Glue" className="h-10 w-auto" />
+            <p className="text-xs text-slate-400">{role}</p>
           </div>
         </div>
-
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item, idx) => {
