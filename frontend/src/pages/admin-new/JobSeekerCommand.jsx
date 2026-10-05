@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader, Card, DataTable, Badge, Tabs, Alert, ProgressBar } from '../../components/ui/Components';
 import { reportingAPI, visaAPI, adminAPI } from '../../services/api';
 
-// 🛡️ Safe helpers — kisi bhi shape ka data handle karega
+// Safe helpers
 const safeArr = (v) => {
   if (Array.isArray(v)) return v;
   if (v && typeof v === 'object') {
@@ -38,7 +38,6 @@ export default function JobSeekerCommand() {
     ]).then(([f, v, u]) => {
       if (cancelled) return;
 
-      // Reporting funnel
       if (f.status === 'fulfilled') {
         const d = f.value?.data;
         setFunnel(typeof d === 'object' && d !== null ? d : {});
@@ -46,7 +45,6 @@ export default function JobSeekerCommand() {
         setFunnel({});
       }
 
-      // Visa funnel
       if (v.status === 'fulfilled') {
         const d = v.value?.data;
         setVisa(typeof d === 'object' && d !== null ? d : {});
@@ -54,9 +52,8 @@ export default function JobSeekerCommand() {
         setVisa({});
       }
 
-      // Users — filter only Job Seekers
       if (u.status === 'fulfilled') {
-              const all = safeArr(u.value?.data);
+        const all = safeArr(u.value?.data);
         setUsers(all.filter((x) => {
           const roles = Array.isArray(x.roles) ? x.roles : (x.role ? [x.role] : []);
           const roleStrings = roles.map((r) => String(r).toUpperCase().replace('-', '_'));
@@ -66,7 +63,6 @@ export default function JobSeekerCommand() {
         setUsers([]);
       }
 
-      // Error only if ALL failed
       if (f.status === 'rejected' && v.status === 'rejected' && u.status === 'rejected') {
         const msg =
           f.reason?.response?.data?.detail ||
@@ -87,8 +83,17 @@ export default function JobSeekerCommand() {
     return () => { cancelled = true; };
   }, []);
 
-  // 🛡️ Compute safe values
-  const funnelStages = safeArr(funnel?.stages ?? funnel?.funnel ?? funnel?.data);
+  // Convert backend funnel object to stages array
+  let funnelStages = [];
+  if (funnel?.funnel && typeof funnel.funnel === 'object') {
+    funnelStages = Object.entries(funnel.funnel).map(([name, count]) => ({
+      name,
+      count,
+    }));
+  } else {
+    funnelStages = safeArr(funnel?.stages ?? funnel?.data);
+  }
+
   const visaCases = safeArr(visa?.cases ?? visa?.items);
   const totalJobSeekers = users.length;
   const totalResumes = safeNum(funnel?.total_resumes ?? funnel?.resumes ?? totalJobSeekers);
@@ -135,21 +140,15 @@ export default function JobSeekerCommand() {
             {loading && <p className="text-gray-500 text-sm text-center py-4">⏳ Loading...</p>}
             {!loading && funnelStages.length === 0 && (
               <p className="text-gray-500 text-sm text-center py-4">
-                📭 No funnel data yet — backend se data nahi aa raha
+                📭 No funnel data yet
               </p>
             )}
             {!loading && funnelStages.length > 0 && (
               <div className="space-y-3">
                 {funnelStages.map((s, i) => {
-                  const stageName =
-                    (typeof s === 'object' && s !== null && (s.stage || s.name || s.label)) ||
-                    `Stage ${i + 1}`;
-                  const stageCount =
-                    typeof s === 'object' && s !== null ? safeNum(s.count ?? s.value ?? 0) : 0;
-                  const maxCount =
-                    typeof funnelStages[0] === 'object' && funnelStages[0] !== null
-                      ? safeNum(funnelStages[0].count ?? funnelStages[0].value ?? 100) || 100
-                      : 100;
+                  const stageName = s.name || s.stage || s.label || `Stage ${i + 1}`;
+                  const stageCount = safeNum(s.count ?? s.value ?? 0);
+                  const maxCount = safeNum(funnelStages[0]?.count ?? funnelStages[0]?.value ?? 100) || 100;
                   return (
                     <div key={i}>
                       <ProgressBar

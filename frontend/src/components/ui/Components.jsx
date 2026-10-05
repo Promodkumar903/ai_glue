@@ -151,15 +151,40 @@ export const Alert = ({ type = 'info', title, children, onClose }) => {
   );
 };
 
-export const PageHeader = ({ title, subtitle, action, icon }) => (
-  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">{icon && <span>{icon}</span>}{title}</h1>
-      {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+export const PageHeader = ({ title, subtitle, action, icon, image }) => {
+  // ✅ Agar image pass hui hai → Hero jaisa photo banner
+  if (image) {
+    return (
+      <div className="relative rounded-2xl overflow-hidden mb-6 shadow-xl">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${image}')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-transparent" />
+        <div className="relative p-8 md:p-10">
+          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+            {icon && <span>{icon}</span>}{title}
+          </h1>
+          {subtitle && <p className="text-slate-200 mt-2 text-sm md:text-base">{subtitle}</p>}
+          {action && <div className="mt-4 flex gap-2 flex-wrap">{action}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Agar image nahi hai → purana simple design
+  return (
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          {icon && <span>{icon}</span>}{title}
+        </h1>
+        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      </div>
+      {action && <div className="flex gap-2 flex-wrap">{action}</div>}
     </div>
-    {action && <div className="flex gap-2 flex-wrap">{action}</div>}
-  </div>
-);
+  );
+};
 
 export const Modal = ({ open, onClose, title, children, size = 'md' }) => {
   useEffect(() => {

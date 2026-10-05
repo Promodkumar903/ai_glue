@@ -131,6 +131,47 @@ def get_my_applications(token: str = Depends(oauth2_scheme)):
     finally:
         session.close()
 
+
+# ============================================================
+# MY APPLICATIONS STATUS — /applications/me/status
+# Frontend isko call karta hai saari applications ke liye
+# ============================================================
+@router.get("/me/status")
+def get_my_applications_status(token: str = Depends(oauth2_scheme)):
+    """Get all applications for the logged-in user with full details."""
+    user = get_current_user(token)
+    session = db.get_session()
+    try:
+        apps = session.query(Application).filter(
+            Application.candidate_id == user.id
+        ).order_by(Application.submitted_at.desc().nullslast()).all()
+
+        result = []
+        for a in apps:
+            # Opportunity details
+            opp = session.query(Opportunity).filter(
+                Opportunity.id == a.opportunity_id
+            ).first() if a.opportunity_id else None
+
+            result.append({
+                "id": str(a.id),
+                "status": a.status or "applied",
+                "opportunity_id": str(a.opportunity_id) if a.opportunity_id else None,
+                "opportunity_title": opp.title if opp else None,
+                "university_name": getattr(opp, 'organization_name', None) if opp else None,
+                "organization_name": getattr(opp, 'organization_name', None) if opp else None,
+                "match_score": a.match_score if a.match_score else 0,
+                "submitted_at": a.submitted_at.isoformat() if a.submitted_at else None,
+                "created_at": a.created_at.isoformat() if hasattr(a, 'created_at') and a.created_at else None,
+                "case_id": str(a.case_id) if a.case_id else None,
+            })
+
+        return result
+    except Exception as e:
+        return []
+    finally:
+        session.close()
+
 @router.get("/{app_id}/status", response_model=ApplicationStatusResponse)
 def get_application_status(app_id: str, token: str = Depends(oauth2_scheme)):
     user = get_current_user(token)
@@ -156,3 +197,5 @@ def get_application_status(app_id: str, token: str = Depends(oauth2_scheme)):
     session.close()
     
     return ApplicationStatusResponse(**app_data)
+
+

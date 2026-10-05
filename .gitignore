@@ -8,6 +8,17 @@ node_modules/
 *_old/
 *backup*/
 .DS_Store
+# Secrets
+.env
+.env.local
+*.csv
+razorpay_test_api_keys_*.csv
+
+# Temp fix files
+fix_*.py
+*_scan/
+
+# Junk (accidental files)
 bool
 str
 python

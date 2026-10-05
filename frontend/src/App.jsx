@@ -16,6 +16,9 @@ import StudentMyApplications from './pages/student-new/MyApplications';
 import SeatAvailability from './pages/student-new/SeatAvailability';
 import BooksLibrary from './pages/student-new/BooksLibrary';
 import StudentDocumentsVault from './pages/student-new/DocumentsVault';
+import Checklist from './pages/student-new/Checklist';
+import VerifyDocument from './pages/student-new/VerifyDocument';
+import ResumeConverter from './pages/student-new/ResumeConverter';
 import AgentCandidates from './pages/agent-new/Candidates';
 import AgentFunnel from './pages/agent-new/Funnel';
 import AgentCommission from './pages/agent-new/Commission';
@@ -37,7 +40,11 @@ import JobSeekerOffers from './pages/job-seeker/Offers';
 import JobSeekerDeals from './pages/job-seeker/Deals';
 import JobSeekerAccommodation from './pages/job-seeker/Accommodation';
 import WorkAbroad from './pages/work-abroad/WorkAbroad';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { trackPageView } from './lib/analytics';
 import TrustDirectory from './pages/trust/TrustDirectory';
+import MyPayments from './pages/MyPayments';
 // ========== NEW ADMIN PAGES ==========
 import EducationControl from './pages/admin-new/EducationControl';
 import VendorControl from './pages/admin-new/VendorControl';
@@ -47,6 +54,7 @@ import AgentBrokerCommand from './pages/admin-new/AgentBrokerCommand';
 import RevenueAnalytics from './pages/admin-new/RevenueAnalytics';
 import BulkOperations from './pages/admin-new/BulkOperations';
 import UploadResume from './pages/jobseeker-new/UploadResume';
+import JobResumeBuilder from './pages/jobseeker-new/JobResumeBuilder';
 import JobSearch from './pages/jobseeker-new/JobSearch';
 import MyApplications from './pages/jobseeker-new/MyApplications';
 import DocumentsVault from './pages/jobseeker-new/DocumentsVault';
@@ -54,7 +62,22 @@ import Offers from './pages/jobseeker-new/Offers';
 import VisaTracker from './pages/jobseeker-new/VisaTracker';
 import Accommodation from './pages/jobseeker-new/Accommodation';
 import ApplyCollege from './pages/student-new/ApplyCollege';
-
+import AdminSearch from './pages/admin-new/AdminSearch';
+import AdminAnalytics from './pages/admin-new/AdminAnalytics';
+import SubAdminCreate from './pages/admin-new/SubAdminCreate';
+import Orchestration from './pages/admin-new/Orchestration';
+import MatchJobSeeker from './pages/admin-new/MatchJobSeeker';
+import MatchStudent from './pages/admin-new/MatchStudent';
+import MatchCompany from './pages/admin-new/MatchCompany';
+import EmailComposer from './pages/admin-new/EmailComposer';
+import PromotionCreator from './pages/admin-new/PromotionCreator';
+import AdsManager from './pages/admin-new/AdsManager';
+import PromotionPopup from './components/PromotionPopup';
+import PricingPage from './pages/PricingPage';
+import MySubscription from './pages/MySubscription';
+import AdminRevenue from './pages/admin-new/AdminRevenue';
+import AdminPaymentSettings from './pages/admin-new/AdminPaymentSettings';
+import AdminPendingPayments from './pages/admin-new/AdminPendingPayments';
 // Layout
 import Sidebar from './components/layouts/Sidebar';
 import Header from './components/layouts/Header';
@@ -83,6 +106,7 @@ function Layout() {
   const { user } = useAuth();
   return (
     <div className="flex h-screen bg-gray-50">
+      <PromotionPopup />
       <Sidebar role={user?.role || 'STUDENT'} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
@@ -96,6 +120,10 @@ function Layout() {
 
 function App() {
   const { user } = useAuth();
+  const location = useLocation();
+    useEffect(() => {
+  trackPageView();
+  }, [location.pathname]);
   const rolePath = user?.role?.toLowerCase().replace('_', '-') || 'student';
 
   return (
@@ -115,6 +143,22 @@ function App() {
         <Route path="/broker" element={<BrokerDashboard />} />
         <Route path="/employer" element={<EmployerDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/search" element={<AdminSearch />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/sub-admin" element={<SubAdminCreate />} />
+        <Route path="/admin/orchestration" element={<Orchestration />} />
+        <Route path="/admin/match/job-seeker" element={<MatchJobSeeker />} />
+        <Route path="/admin/match/student" element={<MatchStudent />} />
+        <Route path="/admin/match/company" element={<MatchCompany />} />
+        <Route path="/admin/email" element={<EmailComposer />} />
+        <Route path="/admin/promotions" element={<PromotionCreator />} />
+        <Route path="/admin/ads" element={<AdsManager />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/my-subscription" element={<MySubscription />} />
+        <Route path="/my-payments" element={<MyPayments />} />
+        <Route path="/admin/revenue" element={<AdminRevenue />} />
+        <Route path="/admin/payment-settings" element={<AdminPaymentSettings />} />
+        <Route path="/admin/pending-payments" element={<AdminPendingPayments />} />
         <Route path="/student/jobs" element={<StudentJobs />} />
         <Route path="/student/housing" element={<StudentHousing />} />
         <Route path="/student/documents" element={<StudentDocuments />} />
@@ -130,6 +174,9 @@ function App() {
         <Route path="/student-new/seats" element={<SeatAvailability />} />
         <Route path="/student-new/books" element={<BooksLibrary />} />
         <Route path="/student-new/documents" element={<StudentDocumentsVault />} /> 
+        <Route path="/student-new/checklist" element={<Checklist />} />
+        <Route path="/student-new/verify" element={<VerifyDocument />} />
+        <Route path="/student-new/resume-converter" element={<ResumeConverter />} />
         <Route path="/study-abroad" element={<StudyAbroad />} />
         <Route path="/student/education" element={<StudentEducation />} />
         <Route path="/student/life" element={<StudentLife />} />
@@ -155,6 +202,7 @@ function App() {
         <Route path="/student-new/apply" element={<ApplyCollege />} />
           {/* ========== NEW JOB SEEKER ROUTES ========== */}
         <Route path="/jobseeker-new/resume" element={<UploadResume />} />
+        <Route path="/jobseeker-new/resume-builder" element={<JobResumeBuilder />} />
         <Route path="/jobseeker-new/search" element={<JobSearch />} />
         <Route path="/jobseeker-new/applications" element={<MyApplications />} />
         <Route path="/jobseeker-new/documents" element={<DocumentsVault />} />

@@ -229,3 +229,8 @@ export const publicAPI = {
   directory: () => api.get('/public/directory'),
   jobs: () => api.get('/public/jobs'),
 };
+
+export const aiAPI = {
+  universityInfo: (data) => api.post('/ai/university-info', data),
+  universitiesByCountry: (country) => api.post('/ai/universities-by-country', { country }),
+};

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { Link } from 'react-router-dom';
 import axios from '../utils/axios';
+import ActiveBanner from '../components/ActiveBanner';
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
@@ -17,6 +18,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
+      <ActiveBanner />
       {/* Header with Logout */}
       <div className="flex justify-between items-center mb-6">
         <div>

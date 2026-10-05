@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LogOut, Bell, Search, X } from 'lucide-react';
+import { LogOut, Bell, Search, X, Menu } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,7 +53,16 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
+       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
+      {/* ===== Hamburger (mobile only) ===== */}
+      <button
+        onClick={onMenuClick}
+        className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+        title="Menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* ===== Search Bar ===== */}
       <div className="flex items-center gap-2 flex-1 max-w-xl">
         <div className="relative w-full">

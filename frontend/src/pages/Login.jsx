@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { 
-  GraduationCap, Briefcase, Users, Landmark, Building2, ShieldCheck, 
-  Sparkles, ArrowRight, CheckCircle2, Mail, Lock 
+import {
+  GraduationCap, Briefcase, Users, Landmark, Building2, ShieldCheck,
+  Sparkles, ArrowRight, CheckCircle2, Mail, Lock
 } from 'lucide-react';
 
 const roles = [
@@ -16,8 +16,8 @@ const roles = [
 ];
 
 export default function Login() {
-  const [email, setEmail] = useState('pramod.rf@gmail.com');
-  const [password, setPassword] = useState('NewPass123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('STUDENT');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,8 +43,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Image — Students & Campus */}
-      <div 
+      {/* Background Image */}
+      <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&q=80')`,
@@ -59,7 +59,7 @@ export default function Login() {
 
       {/* Main Glass Card */}
       <div className="relative w-full max-w-6xl glass-dark p-8 md:p-12 animate-fade-in-up">
-        
+
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -79,14 +79,14 @@ export default function Login() {
           {/* Left: Role Selection */}
           <div className="lg:col-span-3">
             <p className="text-sm font-semibold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-1 h-5 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></span> 
+              <span className="w-1 h-5 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></span>
               Select Your Ecosystem
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {roles.map((role) => {
                 const isSelected = selectedRole === role.id;
                 const Icon = role.icon;
-                
+
                 return (
                   <button
                     key={role.id}
@@ -103,15 +103,15 @@ export default function Login() {
                         <CheckCircle2 className="w-5 h-5 text-white drop-shadow-lg" />
                       </div>
                     )}
-                    
+
                     <div className={`mb-3 p-2.5 rounded-xl ${isSelected ? 'bg-white/20 backdrop-blur-sm' : 'bg-slate-800/50'} transition-all`}>
                       <Icon className={`w-6 h-6 ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-white'} transition-colors`} />
                     </div>
-                    
+
                     <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-200 group-hover:text-white'} transition-colors`}>
                       {role.label}
                     </span>
-                    
+
                     <span className={`text-[10px] ${isSelected ? 'text-white/80' : 'text-gray-400'} font-medium mt-1 leading-tight transition-colors`}>
                       {role.desc}
                     </span>
@@ -124,23 +124,25 @@ export default function Login() {
           {/* Right: Login Form */}
           <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
             <p className="text-sm font-semibold text-gray-200 uppercase tracking-widest mb-5 flex items-center gap-2">
-              <span className="w-1 h-5 bg-gradient-to-b from-indigo-400 to-purple-500 rounded-full"></span> 
+              <span className="w-1 h-5 bg-gradient-to-b from-indigo-400 to-purple-500 rounded-full"></span>
               Secure Access
             </p>
-            
+
             {error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-400/30 rounded-lg text-red-200 text-sm">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div>
                 <label className="block text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="email"
+                    name="email"
+                    autoComplete="off"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -156,6 +158,8 @@ export default function Login() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="password"
+                    name="password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -164,8 +168,8 @@ export default function Login() {
                   />
                 </div>
               </div>
-              
-              {/* 3D Login Button — Color changes with Role */}
+
+              {/* 3D Login Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -175,10 +179,16 @@ export default function Login() {
                 {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
               </button>
 
-              <div className="text-center">
-                <a href="/forgot-password" className="text-sm text-yellow-300 hover:text-yellow-200 transition-colors">
+                            <div className="text-center space-y-2">
+                <a href="/forgot-password" className="text-sm text-yellow-300 hover:text-yellow-200 transition-colors block">
                   Forgot Password?
                 </a>
+                <p className="text-sm text-gray-300">
+                  New user?{' '}
+                  <a href="/register" className="text-blue-300 hover:text-blue-200 underline transition-colors font-semibold">
+                    Create an Account
+                  </a>
+                </p>
               </div>
 
               <p className="text-center text-[10px] text-gray-400 pt-3 flex items-center justify-center gap-2 border-t border-white/10">

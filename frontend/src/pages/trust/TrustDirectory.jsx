@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader, Badge, Alert } from '../../components/ui/Components';
 import GradeBadge from '../../components/GradeBadge';
-import { adminAPI } from '../../services/api';
+import { adminAPI, publicAPI } from '../../services/api';
 
 const safeArr = (v) => {
   if (Array.isArray(v)) return v;
@@ -19,11 +19,11 @@ export default function TrustDirectory() {
   const [error, setError] = useState('');
   const [filterRole, setFilterRole] = useState('all');
 
-  useEffect(() => {
+    useEffect(() => {
     setLoading(true);
-    adminAPI.users()
+    publicAPI.directory()
       .then((r) => {
-        setUsers(safeArr(r.value?.data));
+        setUsers(safeArr(r.data));
         setLoading(false);
       })
       .catch(() => {

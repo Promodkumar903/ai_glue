@@ -204,11 +204,19 @@ def create_course(course_data: CourseCreate, admin: User = Depends(require_admin
     return {"id": course_id, "name": new_course.name, "message": "Course created"}
 
 @router.get("/courses", response_model=list)
-def get_courses(department_id: Optional[str] = None):
+def get_courses(
+    department_id: Optional[str] = None,
+    university_id: Optional[str] = None,
+):
     session = db.get_session()
     query = session.query(Course)
     if department_id:
         query = query.filter(Course.department_id == department_id)
+    if university_id:
+        from core.database import Department, Campus
+        query = query.join(Department, Course.department_id == Department.id)\
+                     .join(Campus, Department.campus_id == Campus.id)\
+                     .filter(Campus.university_id == university_id)
     courses = query.all()
     session.close()
     return [
@@ -270,11 +278,15 @@ def create_intake_seat(seat_data: IntakeSeatCreate, admin: User = Depends(requir
 def get_intake_seats(course_id: str):
     session = db.get_session()
     seats = session.query(IntakeSeat).filter(IntakeSeat.course_id == course_id).all()
+    course = session.query(Course).filter(Course.id == course_id).first()
     session.close()
     return [
         {
             "id": s.id,
+            "course_id": s.course_id,
+            "course_name": course.name if course else None,
             "academic_year": s.academic_year,
+            "intake_year": s.academic_year,
             "total_seats": s.total_seats,
             "filled_seats": s.filled_seats,
             "waiting_seats": s.waiting_seats,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { Users, Building2, DollarSign, Activity, Shield, AlertTriangle } from 'lucide-react';
 import axios from '../utils/axios';
+import ActiveBanner from '../components/ActiveBanner';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
+      <ActiveBanner />
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
