@@ -77,7 +77,10 @@ import os
 import json
 import io
 from groq import Groq
-from zai import ZaiClient
+try:
+    from zai import ZaiClient
+except ImportError:
+    ZaiClient = None
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 from fastapi import UploadFile, File, Form
@@ -87,7 +90,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 ZAI_API_KEY = os.getenv("ZAI_API_KEY")
-zai_client = ZaiClient(api_key=ZAI_API_KEY) if ZAI_API_KEY else None
+zai_client = ZaiClient(api_key=ZAI_API_KEY) if (ZAI_API_KEY and ZaiClient) else None
 # ==================================
 
 # ========== APP INSTANCE ==========
