@@ -22,3 +22,7 @@ pytz
 apscheduler
 slowapi
 razorpay
+groq 
+zai-sdk 
+pypdf 
+python-docx 
