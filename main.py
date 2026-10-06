@@ -4482,3 +4482,97 @@ def force_reseed_opportunities():
         "total": len(opps),
         "errors_sample": errors[:3] if errors else [],
     }
+
+# ========== AUTO-FIX COLUMNS (Smart) ==========
+@app.post("/admin/auto-fix-columns", tags=["Admin"])
+def auto_fix_columns():
+    """
+    Auto-detect missing columns from seed_data.json and add them.
+    Then re-seed all data.
+    """
+    import sqlite3
+    import json as json_lib_ac
+    import os as os_ac
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    seed_path = os_ac.path.join(os_ac.path.dirname(__file__), "seed_data.json")
+    if not os_ac.path.exists(seed_path):
+        conn.close()
+        return {"status": "error", "message": "seed_data.json not found"}
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_ac.load(f)
+
+    added = []
+    errors = []
+
+    # For each table, check all columns from JSON
+    for table, rows in data.items():
+        if not rows:
+            continue
+
+        # Get all unique columns from all rows
+        all_cols = set()
+        for row in rows:
+            all_cols.update(row.keys())
+
+        # Get existing columns in DB
+        try:
+            cur.execute(f"PRAGMA table_info({table})")
+            existing = set(r[1] for r in cur.fetchall())
+        except Exception as e:
+            errors.append(f"{table}: {e}")
+            continue
+
+        # Add missing columns
+        for col in all_cols:
+            if col not in existing:
+                try:
+                    cur.execute(f'ALTER TABLE {table} ADD COLUMN "{col}" TEXT')
+                    added.append(f"{table}.{col}")
+                except Exception as e:
+                    errors.append(f"{table}.{col}: {e}")
+
+    conn.commit()
+
+    # Now re-seed (DELETE + INSERT)
+    for table in ['country_documents', 'intake_seats', 'courses', 'departments',
+                  'campuses', 'cities', 'universities', 'countries', 'opportunities']:
+        try:
+            cur.execute(f"DELETE FROM {table}")
+        except Exception:
+            pass
+
+    seeded = {}
+    for table in ['countries', 'universities', 'cities', 'campuses', 'departments',
+                  'courses', 'intake_seats', 'country_documents', 'opportunities']:
+        rows = data.get(table, [])
+        inserted = 0
+        for row in rows:
+            try:
+                cols = list(row.keys())
+                placeholders = ",".join(["?"] * len(cols))
+                col_names = ",".join(f'"{c}"' for c in cols)
+                values = [row[c] for c in cols]
+                cur.execute(
+                    f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})",
+                    values
+                )
+                inserted += 1
+            except Exception as e:
+                if len(errors) < 5:
+                    errors.append(f"{table}: {e}")
+        seeded[table] = {"inserted": inserted, "total": len(rows)}
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "complete",
+        "columns_added": added,
+        "seeded": seeded,
+        "errors": errors[:10] if errors else [],
+        "message": "Auto-fix and re-seed complete"
+    }
