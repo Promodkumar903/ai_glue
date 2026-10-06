@@ -4576,3 +4576,181 @@ def auto_fix_columns():
         "errors": errors[:10] if errors else [],
         "message": "Auto-fix and re-seed complete"
     }
+
+# ========== INIT ALL TABLES (One Shot) ==========
+@app.post("/admin/init-all", tags=["Admin"])
+def init_all():
+    """Create all missing tables + seed everything from seed_data.json."""
+    import sqlite3
+    import json as json_lib_init
+    import os as os_init
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    log = []
+
+    # ---------- CREATE TABLES ----------
+    tables_sql = {
+        'country_documents': """
+            CREATE TABLE IF NOT EXISTS country_documents (
+                id TEXT PRIMARY KEY,
+                country TEXT,
+                document_name TEXT,
+                is_mandatory INTEGER DEFAULT 0,
+                description TEXT,
+                estimated_days INTEGER,
+                official_link TEXT
+            )
+        """,
+        'countries': """
+            CREATE TABLE IF NOT EXISTS countries (
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                iso_code TEXT,
+                visa_difficulty REAL DEFAULT 0,
+                cost_of_living_index REAL DEFAULT 0
+            )
+        """,
+        'universities': """
+            CREATE TABLE IF NOT EXISTS universities (
+                id TEXT PRIMARY KEY,
+                country_id TEXT,
+                name TEXT,
+                website TEXT,
+                ranking_global INTEGER,
+                ranking_national INTEGER,
+                accreditation TEXT,
+                domain TEXT
+            )
+        """,
+        'cities': """
+            CREATE TABLE IF NOT EXISTS cities (
+                id TEXT PRIMARY KEY,
+                country_id TEXT,
+                name TEXT,
+                state TEXT
+            )
+        """,
+        'campuses': """
+            CREATE TABLE IF NOT EXISTS campuses (
+                id TEXT PRIMARY KEY,
+                university_id TEXT,
+                city_id TEXT,
+                name TEXT,
+                address TEXT,
+                established_year INTEGER
+            )
+        """,
+        'departments': """
+            CREATE TABLE IF NOT EXISTS departments (
+                id TEXT PRIMARY KEY,
+                campus_id TEXT,
+                name TEXT
+            )
+        """,
+        'courses': """
+            CREATE TABLE IF NOT EXISTS courses (
+                id TEXT PRIMARY KEY,
+                department_id TEXT,
+                name TEXT,
+                level TEXT,
+                duration_months INTEGER,
+                tuition_fee REAL,
+                currency TEXT DEFAULT 'USD',
+                admission_requirements TEXT,
+                course_url TEXT
+            )
+        """,
+        'intake_seats': """
+            CREATE TABLE IF NOT EXISTS intake_seats (
+                id TEXT PRIMARY KEY,
+                course_id TEXT,
+                academic_year TEXT,
+                total_seats INTEGER,
+                filled_seats INTEGER DEFAULT 0,
+                waiting_seats INTEGER DEFAULT 0
+            )
+        """,
+        'opportunities': """
+            CREATE TABLE IF NOT EXISTS opportunities (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                type TEXT,
+                title TEXT,
+                description TEXT,
+                requirements TEXT,
+                fees TEXT,
+                capacity INTEGER,
+                deadline TEXT,
+                status TEXT DEFAULT 'open',
+                country TEXT,
+                company TEXT,
+                salary TEXT,
+                location TEXT,
+                created_at TEXT
+            )
+        """,
+    }
+
+    for name, sql in tables_sql.items():
+        try:
+            cur.execute(sql)
+            log.append(f"✓ {name} table ready")
+        except Exception as e:
+            log.append(f"✗ {name}: {e}")
+
+    conn.commit()
+
+    # ---------- LOAD SEED DATA ----------
+    seed_path = os_init.path.join(os_init.path.dirname(__file__), "seed_data.json")
+    if not os_init.path.exists(seed_path):
+        conn.close()
+        return {"status": "partial", "log": log, "error": "seed_data.json not found"}
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_init.load(f)
+
+    # DELETE existing data (fresh seed)
+    for table in ['country_documents', 'intake_seats', 'courses', 'departments',
+                  'campuses', 'cities', 'universities', 'countries', 'opportunities']:
+        try:
+            cur.execute(f"DELETE FROM {table}")
+        except Exception:
+            pass
+
+    # INSERT data
+    seeded = {}
+    table_order = ['countries', 'universities', 'cities', 'campuses', 'departments',
+                   'courses', 'intake_seats', 'country_documents', 'opportunities']
+
+    for table in table_order:
+        rows = data.get(table, [])
+        inserted = 0
+        errors = []
+        for row in rows:
+            try:
+                cols = list(row.keys())
+                placeholders = ",".join(["?"] * len(cols))
+                col_names = ",".join(f'"{c}"' for c in cols)
+                values = [row[c] for c in cols]
+                cur.execute(
+                    f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})",
+                    values
+                )
+                inserted += 1
+            except Exception as e:
+                if len(errors) < 3:
+                    errors.append(str(e))
+        seeded[table] = {"inserted": inserted, "total": len(rows)}
+        if errors:
+            seeded[table]["errors"] = errors
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "complete",
+        "log": log,
+        "seeded": seeded,
+        "message": "All tables created and data seeded"
+    }
