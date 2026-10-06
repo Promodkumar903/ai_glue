@@ -4115,3 +4115,314 @@ def db_counts():
             counts[t] = f"error: {e}"
     conn.close()
     return counts
+
+# ========== STUDENT LIFE AI SUGGEST ==========
+class StudentLifeSuggestRequest(BaseModel):
+    category: str
+    country: str = ""
+    user_id: str = ""
+
+@app.post("/student-life/ai-suggest", tags=["Student Life"])
+async def student_life_ai_suggest(body: StudentLifeSuggestRequest):
+    """AI suggests practical items for a student based on category + country."""
+    if not groq_client:
+        raise HTTPException(status_code=500, detail="AI not configured")
+
+    category_map = {
+        "sim": "SIM card / Mobile Internet",
+        "bank": "Bank Account opening",
+        "health": "Health Insurance",
+        "accommodation": "Accommodation / Housing",
+        "transport": "Transport / Metro / Bus",
+        "food": "Food / Grocery stores",
+        "books": "Books / Study materials",
+        "emergency": "Emergency contacts & services",
+    }
+
+    category_label = category_map.get(body.category.lower(), body.category)
+    country = body.country or "Germany"
+
+    prompt = f"""You are a helpful study-abroad advisor.
+
+A student needs help with: **{category_label}** in **{country}**.
+
+Provide a practical list of 6-8 specific items/suggestions. For each, give:
+- name (short title)
+- description (1-2 sentences, practical for a student)
+- cost (approximate, in local currency if possible)
+- link (optional, official site)
+
+Return ONLY JSON in this format:
+{{
+  "items": [
+    {{
+      "name": "...",
+      "description": "...",
+      "cost": "...",
+      "link": "..."
+    }}
+  ],
+  "ai_note": "Short helpful note"
+}}
+
+Rules:
+- Be specific to {country}
+- Include real brands/services available there
+- Use student-friendly (cheap) options
+- If {country} unknown, give general advice
+
+Only return JSON, no markdown."""
+
+    try:
+        response = groq_client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=1500,
+        )
+        content = response.choices[0].message.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        import json as json_lib_sl
+        data = json_lib_sl.loads(content)
+        return {
+            "category": body.category,
+            "country": country,
+            "items": data.get("items", []),
+            "ai_note": data.get("ai_note", ""),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
+
+# ========== HOUSING AI SUGGEST (Internal First, External Fallback) ==========
+class HousingSuggestRequest(BaseModel):
+    city: str = ""
+    country: str = ""
+    housing_type: str = "student_hostel"
+    max_rent: float = 0
+
+@app.post("/housing/ai-suggest", tags=["Housing"])
+async def housing_ai_suggest(body: HousingSuggestRequest):
+    """
+    Housing suggestions:
+    1. First check internal DB (vendor/agent listings)
+    2. If none found, generate AI external suggestions
+    """
+    import sqlite3
+
+    # ---------- STEP 1: Check Internal DB ----------
+    conn = sqlite3.connect('ai_glue.db')
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    query = "SELECT * FROM housing WHERE status != 'CLOSED'"
+    params = []
+
+    if body.city:
+        query += " AND LOWER(location) LIKE ?"
+        params.append(f"%{body.city.lower()}%")
+    if body.housing_type:
+        query += " AND LOWER(housing_type) LIKE ?"
+        params.append(f"%{body.housing_type.replace('_',' ').lower()}%")
+    if body.max_rent and body.max_rent > 0:
+        query += " AND monthly_rent <= ?"
+        params.append(body.max_rent)
+
+    query += " ORDER BY created_at DESC LIMIT 20"
+
+    try:
+        cur.execute(query, params)
+        internal = [dict(r) for r in cur.fetchall()]
+    except Exception:
+        internal = []
+    finally:
+        conn.close()
+
+    if internal:
+        return {
+            "source": "internal",
+            "count": len(internal),
+            "items": internal,
+            "message": f"{len(internal)} verified listings from our partners",
+        }
+
+    # ---------- STEP 2: AI External Fallback ----------
+    if not groq_client:
+        return {
+            "source": "external",
+            "count": 0,
+            "items": [],
+            "message": "No internal listings. AI not configured for suggestions.",
+        }
+
+    type_labels = {
+        "student_hostel": "student hostel / university dormitory",
+        "shared_flat": "shared flat (WG / roommate)",
+        "private_apartment": "private apartment",
+        "pg": "paying guest (PG) accommodation",
+        "homestay": "homestay with a local family",
+        "temporary": "short-term / temporary stay (first weeks)",
+    }
+    type_label = type_labels.get(body.housing_type, "accommodation")
+    location = body.city or body.country or "Germany"
+
+    rent_hint = f"Budget: under {body.max_rent} per month" if body.max_rent else ""
+
+    prompt = f"""You are a study-abroad housing advisor.
+
+A student needs: **{type_label}** in **{location}**.
+{rent_hint}
+
+Provide 6 practical accommodation options/services. For each:
+- name (real platform, hostel, or service)
+- description (1-2 sentences, student-focused)
+- rent_range (approximate monthly in local currency)
+- link (official website)
+- source_type: "platform" (WG-Gesucht, Uniplaces) or "service" (university housing office) or "tip" (practical advice)
+
+Return ONLY JSON:
+{{
+  "items": [
+    {{
+      "name": "...",
+      "description": "...",
+      "rent_range": "...",
+      "link": "...",
+      "source_type": "..."
+    }}
+  ],
+  "ai_note": "Short practical advice"
+}}
+
+Rules:
+- Real platforms/services used in {location}
+- Focus on student budgets
+- Include at least 1 university housing office option
+- Only JSON, no markdown."""
+
+    try:
+        response = groq_client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=1800,
+        )
+        content = response.choices[0].message.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        import json as json_lib_hs
+        data = json_lib_hs.loads(content)
+        return {
+            "source": "external",
+            "count": len(data.get("items", [])),
+            "items": data.get("items", []),
+            "ai_note": data.get("ai_note", ""),
+            "message": "No internal listings yet — here are AI suggestions",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
+
+# ========== FIX AND SEED (One Shot) ==========
+@app.post("/admin/fix-and-seed", tags=["Admin"])
+def fix_and_seed():
+    """
+    One endpoint to:
+    1. Create missing tables/columns
+    2. Seed all data from seed_data.json
+    """
+    import sqlite3
+    import json as json_lib_fs
+    import os as os_fs
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    fixes = []
+
+    # ---------- STEP 1: FIX SCHEMA ----------
+    # country_documents
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS country_documents (
+                id TEXT PRIMARY KEY,
+                country TEXT,
+                document_name TEXT,
+                is_mandatory INTEGER DEFAULT 0,
+                description TEXT,
+                estimated_days INTEGER,
+                official_link TEXT
+            )
+        """)
+        fixes.append("✓ country_documents table")
+    except Exception as e:
+        fixes.append(f"✗ country_documents: {e}")
+
+    # opportunities columns
+    try:
+        cur.execute("PRAGMA table_info(opportunities)")
+        cols = [r[1] for r in cur.fetchall()]
+        for col in ['country', 'company', 'salary']:
+            if col not in cols:
+                cur.execute(f"ALTER TABLE opportunities ADD COLUMN {col} TEXT")
+                fixes.append(f"✓ opportunities.{col} added")
+            else:
+                fixes.append(f"○ opportunities.{col} exists")
+    except Exception as e:
+        fixes.append(f"✗ opportunities columns: {e}")
+
+    conn.commit()
+
+    # ---------- STEP 2: SEED DATA ----------
+    seed_path = os_fs.path.join(os_fs.path.dirname(__file__), "seed_data.json")
+    if not os_fs.path.exists(seed_path):
+        conn.close()
+        return {"status": "partial", "fixes": fixes, "seed": "seed_data.json not found"}
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_fs.load(f)
+
+    table_order = [
+        'countries', 'universities', 'cities', 'campuses', 'departments',
+        'courses', 'intake_seats', 'country_documents', 'opportunities'
+    ]
+
+    seed_results = {}
+    for table in table_order:
+        rows = data.get(table, [])
+        if not rows:
+            seed_results[table] = {"inserted": 0, "skipped": 0, "total": 0}
+            continue
+
+        inserted = 0
+        skipped = 0
+        for row in rows:
+            try:
+                cols = list(row.keys())
+                placeholders = ",".join(["?"] * len(cols))
+                col_names = ",".join(cols)
+                values = [row[c] for c in cols]
+                cur.execute(
+                    f"INSERT OR IGNORE INTO {table} ({col_names}) VALUES ({placeholders})",
+                    values
+                )
+                if cur.rowcount > 0:
+                    inserted += 1
+                else:
+                    skipped += 1
+            except Exception:
+                skipped += 1
+
+        seed_results[table] = {"inserted": inserted, "skipped": skipped, "total": len(rows)}
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "complete",
+        "schema_fixes": fixes,
+        "seed_results": seed_results,
+        "message": "Schema fixed and data seeded"
+    }
