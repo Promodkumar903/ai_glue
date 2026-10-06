@@ -69,9 +69,10 @@ class DatabaseEngine:
             self.db_url,
             connect_args=connect_args,
             pool_pre_ping=True,
-            pool_size=20,
-            max_overflow=40,
-            pool_recycle=1800,
+            pool_size=5,
+            max_overflow=5,
+            pool_recycle=300,
+            pool_timeout=10,
         )
         self.Session = sessionmaker(bind=self.engine, query_cls=TenantAwareQuery)
 
