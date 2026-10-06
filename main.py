@@ -4426,3 +4426,59 @@ def fix_and_seed():
         "seed_results": seed_results,
         "message": "Schema fixed and data seeded"
     }
+
+# ========== FORCE RESEED OPPORTUNITIES ==========
+@app.post("/admin/force-reseed-opportunities", tags=["Admin"])
+def force_reseed_opportunities():
+    """Force replace opportunities rows from seed_data.json."""
+    import sqlite3
+    import json as json_lib_op
+    import os as os_op
+
+    seed_path = os_op.path.join(os_op.path.dirname(__file__), "seed_data.json")
+    if not os_op.path.exists(seed_path):
+        raise HTTPException(status_code=404, detail="seed_data.json not found")
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_op.load(f)
+
+    opps = data.get("opportunities", [])
+    if not opps:
+        return {"status": "no_data", "message": "No opportunities in seed_data.json"}
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    # Delete existing then re-insert fresh
+    try:
+        cur.execute("DELETE FROM opportunities")
+        deleted = cur.rowcount
+    except Exception as e:
+        deleted = 0
+
+    inserted = 0
+    errors = []
+    for row in opps:
+        try:
+            cols = list(row.keys())
+            placeholders = ",".join(["?"] * len(cols))
+            col_names = ",".join(cols)
+            values = [row[c] for c in cols]
+            cur.execute(
+                f"INSERT INTO opportunities ({col_names}) VALUES ({placeholders})",
+                values
+            )
+            inserted += 1
+        except Exception as e:
+            errors.append(str(e))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "done",
+        "deleted": deleted,
+        "inserted": inserted,
+        "total": len(opps),
+        "errors_sample": errors[:3] if errors else [],
+    }
