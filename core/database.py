@@ -65,14 +65,12 @@ class DatabaseEngine:
     def __init__(self, db_url=None):
         self.db_url = db_url or os.getenv('DATABASE_URL', 'sqlite:///./ai_glue.db')
         connect_args = {"check_same_thread": False} if self.db_url.startswith('sqlite') else {}
+        from sqlalchemy.pool import NullPool
+
         self.engine = create_engine(
             self.db_url,
             connect_args=connect_args,
-            pool_pre_ping=True,
-            pool_size=5,
-            max_overflow=5,
-            pool_recycle=300,
-            pool_timeout=10,
+            poolclass=NullPool,
         )
         self.Session = sessionmaker(bind=self.engine, query_cls=TenantAwareQuery)
 
