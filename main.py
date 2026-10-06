@@ -4014,3 +4014,104 @@ def my_payments(user_id: str):
          "created_at": r[9]}
         for r in rows
     ], "total": len(rows)}
+
+# ========== SEED DATABASE ENDPOINT ==========
+@app.post("/admin/seed-db", tags=["Admin"])
+def seed_database():
+    """
+    Seed database with initial data from seed_data.json.
+    Idempotent — duplicate rows are skipped (INSERT OR IGNORE).
+    """
+    import json as json_lib_seed
+    import sqlite3
+    import os as os_seed
+
+    seed_path = os_seed.path.join(os_seed.path.dirname(__file__), "seed_data.json")
+    if not os_seed.path.exists(seed_path):
+        raise HTTPException(status_code=404, detail="seed_data.json not found in project root")
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_seed.load(f)
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    table_order = [
+        'countries',
+        'universities',
+        'cities',
+        'campuses',
+        'departments',
+        'courses',
+        'intake_seats',
+        'country_documents',
+        'opportunities',
+    ]
+
+    results = {}
+
+    for table in table_order:
+        rows = data.get(table, [])
+        if not rows:
+            results[table] = {"inserted": 0, "skipped": 0, "total": 0}
+            continue
+
+        inserted = 0
+        skipped = 0
+        errors = []
+
+        for row in rows:
+            try:
+                cols = list(row.keys())
+                placeholders = ",".join(["?"] * len(cols))
+                col_names = ",".join(cols)
+                values = [row[c] for c in cols]
+
+                cur.execute(
+                    f"INSERT OR IGNORE INTO {table} ({col_names}) VALUES ({placeholders})",
+                    values
+                )
+                if cur.rowcount > 0:
+                    inserted += 1
+                else:
+                    skipped += 1
+            except Exception as e:
+                skipped += 1
+                if len(errors) < 3:
+                    errors.append(str(e))
+
+        results[table] = {
+            "inserted": inserted,
+            "skipped": skipped,
+            "total": len(rows),
+        }
+        if errors:
+            results[table]["errors_sample"] = errors
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "seeded",
+        "results": results,
+        "message": "Database seeded. Duplicate rows skipped.",
+    }
+
+
+@app.get("/admin/db-counts", tags=["Admin"])
+def db_counts():
+    """Check row counts in key tables."""
+    import sqlite3
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    tables = ['countries', 'universities', 'cities', 'campuses', 'departments',
+              'courses', 'intake_seats', 'country_documents', 'opportunities']
+    counts = {}
+    for t in tables:
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM {t}")
+            counts[t] = cur.fetchone()[0]
+        except Exception as e:
+            counts[t] = f"error: {e}"
+    conn.close()
+    return counts
