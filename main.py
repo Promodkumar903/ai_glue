@@ -4754,3 +4754,74 @@ def init_all():
         "seeded": seeded,
         "message": "All tables created and data seeded"
     }
+
+# ========== FIX OPPORTUNITIES ==========
+@app.post("/admin/fix-opportunities", tags=["Admin"])
+def fix_opportunities():
+    """Force add missing columns to opportunities table and reseed."""
+    import sqlite3
+    import json as json_lib_opp
+    import os as os_opp
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    log = []
+
+    # 1. Add missing columns
+    cur.execute("PRAGMA table_info(opportunities)")
+    existing = set(r[1] for r in cur.fetchall())
+    log.append(f"Existing columns: {sorted(existing)}")
+
+    needed = ['country', 'company', 'salary', 'location', 'description',
+              'requirements', 'fees', 'capacity', 'deadline', 'status',
+              'organization_id', 'type', 'title', 'created_at']
+
+    for col in needed:
+        if col not in existing:
+            try:
+                cur.execute(f'ALTER TABLE opportunities ADD COLUMN "{col}" TEXT')
+                log.append(f"✓ Added: {col}")
+            except Exception as e:
+                log.append(f"✗ {col}: {e}")
+
+    conn.commit()
+
+    # 2. Reseed opportunities
+    seed_path = os_opp.path.join(os_opp.path.dirname(__file__), "seed_data.json")
+    if not os_opp.path.exists(seed_path):
+        conn.close()
+        return {"status": "partial", "log": log, "error": "seed_data.json missing"}
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        data = json_lib_opp.load(f)
+
+    rows = data.get('opportunities', [])
+    cur.execute("DELETE FROM opportunities")
+
+    inserted = 0
+    errors = []
+    for row in rows:
+        try:
+            cols = list(row.keys())
+            placeholders = ",".join(["?"] * len(cols))
+            col_names = ",".join(f'"{c}"' for c in cols)
+            values = [row[c] for c in cols]
+            cur.execute(
+                f"INSERT INTO opportunities ({col_names}) VALUES ({placeholders})",
+                values
+            )
+            inserted += 1
+        except Exception as e:
+            if len(errors) < 5:
+                errors.append(str(e))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "complete",
+        "log": log,
+        "inserted": inserted,
+        "total": len(rows),
+        "errors": errors
+    }
