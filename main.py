@@ -575,7 +575,7 @@ def root():
 # ========== DOCUMENT CHECKLIST ENDPOINTS ==========
 @app.get("/education/documents-list/countries", tags=["Education"])
 def get_document_countries():
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute('SELECT DISTINCT country FROM country_documents ORDER BY country')
@@ -585,7 +585,7 @@ def get_document_countries():
 
 @app.get("/education/documents/{country}", tags=["Education"])
 def get_country_documents(country: str):
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute('SELECT id, document_name, is_mandatory, description, estimated_days, official_link FROM country_documents WHERE LOWER(country) = LOWER(?)', (country,))
@@ -607,7 +607,7 @@ def get_country_documents(country: str):
 # ========== DOCUMENT SERVICES ENDPOINTS ==========
 @app.get("/education/document-services/{document_type}", tags=["Education"])
 def get_document_services(document_type: str, country: str = None):
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     if country:
@@ -895,11 +895,11 @@ async def generate_documents(
 
     photo_instruction = ""
     if photo_required:
-        photo_instruction = f"PHOTO: Include placeholder [PHOTO PLACEHOLDER — {photo_spec}]"
+        photo_instruction = f"PHOTO: Include placeholder [PHOTO PLACEHOLDER â€” {photo_spec}]"
 
     doc_format_placeholders = nl.join([f"===DOCUMENT:{did}==={nl}[Content]" for did in selected_ids])
 
-    prompt = f"""You are a RESUME FORMATTER — NOT a writer.
+    prompt = f"""You are a RESUME FORMATTER â€” NOT a writer.
 
 CRITICAL CONTEXT: This is a STUDY ABROAD application, NOT a job application.
 - Cover Letter: Address to "Admissions Committee", NOT "Hiring Manager"
@@ -916,8 +916,8 @@ GLOBAL RULES:
 - For Australia: GS Statement MUST have 4 numbered question headers
 
 CRITICAL RULES:
-1. USE ONLY THE ORIGINAL DATA — same companies, dates, degrees, titles.
-2. DO NOT INVENT — no fake companies, no fake numbers, no fake skills.
+1. USE ONLY THE ORIGINAL DATA â€” same companies, dates, degrees, titles.
+2. DO NOT INVENT â€” no fake companies, no fake numbers, no fake skills.
 3. YOUR VALUE-ADD: Change FORMAT ({format_name}), LANGUAGE ({language_instruction}), STRUCTURE.
 4. Add [X] placeholders for missing quantities.
 
@@ -927,7 +927,7 @@ LENGTH: {length}
 {photo_instruction}
 TARGET PROGRAM: {target_role or 'Not specified'}
 
-=== ORIGINAL RESUME (SOURCE OF TRUTH — USE THIS DATA) ===
+=== ORIGINAL RESUME (SOURCE OF TRUTH â€” USE THIS DATA) ===
 {resume_text}
 
 === DOCUMENTS TO GENERATE ===
@@ -1234,31 +1234,31 @@ Only return valid JSON, no markdown."""
 # ========== JOB REGIONS & COUNTRIES ==========
 JOB_REGIONS = {
     "Asia": {
-        "flag": "🌏",
+        "flag": "ðŸŒ",
         "countries": ["India", "China", "Japan", "South Korea", "Singapore", "Malaysia", "Thailand", "Vietnam", "Philippines", "Indonesia", "Sri Lanka", "Bangladesh", "Nepal", "Pakistan"]
     },
     "Middle East": {
-        "flag": "🕌",
+        "flag": "ðŸ•Œ",
         "countries": ["UAE", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Israel", "Turkey", "Jordan", "Lebanon"]
     },
     "Europe": {
-        "flag": "🌍",
+        "flag": "ðŸŒ",
         "countries": ["Germany", "United Kingdom", "France", "Netherlands", "Portugal", "Spain", "Italy", "Poland", "Czech Republic", "Sweden", "Norway", "Denmark", "Ireland", "Switzerland", "Austria", "Belgium"]
     },
     "North America": {
-        "flag": "🌎",
+        "flag": "ðŸŒŽ",
         "countries": ["USA", "Canada", "Mexico"]
     },
     "Latin America": {
-        "flag": "🌴",
+        "flag": "ðŸŒ´",
         "countries": ["Brazil", "Argentina", "Chile", "Colombia", "Peru", "Ecuador"]
     },
     "Africa": {
-        "flag": "🌍",
+        "flag": "ðŸŒ",
         "countries": ["South Africa", "Nigeria", "Kenya", "Egypt", "Morocco", "Ghana", "Tanzania"]
     },
     "Oceania": {
-        "flag": "🏝️",
+        "flag": "ðŸï¸",
         "countries": ["Australia", "New Zealand"]
     },
 }
@@ -1313,8 +1313,8 @@ RULES:
 - Use REAL companies that operate in this location
 - Salaries must be REALISTIC for that market (e.g., Oman salaries differ from USA)
 - Include diversity: labor, technical, management, executive roles if matching query
-- If query is "labor" — include construction, warehouse, delivery, etc.
-- If query is "software" — include developers, engineers, architects
+- If query is "labor" â€” include construction, warehouse, delivery, etc.
+- If query is "software" â€” include developers, engineers, architects
 - Company websites must be REAL (e.g., google.com/careers, tesla.com/careers)
 
 Return ONLY JSON:
@@ -1497,8 +1497,8 @@ def get_job_document_types(country: str):
         },
         "Japan": {
             "documents": [
-                {"id": "rirekisho", "name": "Rirekisho (履歴書)", "lang": "Japanese + English", "required": True},
-                {"id": "shokumu_keirekisho", "name": "Shokumu Keirekisho (職務経歴書)", "lang": "Japanese + English", "required": True},
+                {"id": "rirekisho", "name": "Rirekisho (å±¥æ­´æ›¸)", "lang": "Japanese + English", "required": True},
+                {"id": "shokumu_keirekisho", "name": "Shokumu Keirekisho (è·å‹™çµŒæ­´æ›¸)", "lang": "Japanese + English", "required": True},
             ],
             "photo_required": True,
             "photo_spec": "3x4 cm, formal attire",
@@ -1597,7 +1597,7 @@ async def generate_job_documents(
         "cv": "A professional CV following the country format. Work experience FIRST.",
         "resume": "A professional resume following the country format. Work experience FIRST. ATS-friendly.",
         "rirekisho": "A Japanese Rirekisho with photo placeholder.",
-        "shokumu_keirekisho": "A Japanese Shokumu Keirekisho — detailed career summary.",
+        "shokumu_keirekisho": "A Japanese Shokumu Keirekisho â€” detailed career summary.",
     }
 
     selected_ids = [d.strip() for d in document_ids.split(",") if d.strip()]
@@ -1690,8 +1690,8 @@ NO markdown code blocks. Only the documents."""
 # ========== PUBLIC DIRECTORY (Agents & Brokers) ==========
 @app.get("/public/directory", tags=["Public"])
 def public_directory():
-    """Public directory — agents and brokers with grades."""
-    import sqlite3
+    """Public directory â€” agents and brokers with grades."""
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -1748,7 +1748,7 @@ def admin_universal_search(
     offset: int = 0,
 ):
     """Search across users, organizations, opportunities, documents."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -1806,7 +1806,7 @@ def admin_universal_search(
                 "entity_type": "opportunity",
                 "id": r[0],
                 "title": r[1],
-                "subtitle": f"{r[4] or ''} — {r[3] or ''}",
+                "subtitle": f"{r[4] or ''} â€” {r[3] or ''}",
                 "meta": f"Type: {r[2]} | Status: {r[5]}",
             })
 
@@ -1840,7 +1840,7 @@ class SubAdminCreateRequest(BaseModel):
 @app.post("/admin/create-sub-admin", tags=["Admin"])
 def create_sub_admin(body: SubAdminCreateRequest):
     """Create a sub-admin account with specific permissions."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import uuid
     import bcrypt as bcrypt_lib
     from datetime import datetime
@@ -1904,7 +1904,7 @@ def create_sub_admin(body: SubAdminCreateRequest):
         admin_email = os.getenv("SMTP_USER", "pramod.rf@gmail.com")
         admin_body = f"""
         <html><body style="font-family: Arial, sans-serif;">
-            <h2 style="color:#9333ea;">🔔 Naya Payment Aaya</h2>
+            <h2 style="color:#9333ea;">ðŸ”” Naya Payment Aaya</h2>
             <table style="border-collapse: collapse;">
                 <tr><td style="padding:6px;"><b>User:</b></td><td>{body.user_email or body.user_id}</td></tr>
                 <tr><td style="padding:6px;"><b>Plan:</b></td><td>{plan[1]} ({body.billing_cycle})</td></tr>
@@ -1913,12 +1913,12 @@ def create_sub_admin(body: SubAdminCreateRequest):
                 <tr><td style="padding:6px;"><b>UTR:</b></td><td><code>{body.utr_number}</code></td></tr>
             </table>
             <p style="margin-top:20px;">
-                <a href="http://localhost:5173/admin/pending-payments" style="background:#9333ea; color:white; padding:10px 20px; text-decoration:none; border-radius:6px;">Approve Karo →</a>
+                <a href="http://localhost:5173/admin/pending-payments" style="background:#9333ea; color:white; padding:10px 20px; text-decoration:none; border-radius:6px;">Approve Karo â†’</a>
             </p>
             <p style="color:#666; font-size:12px;">Ref: {payment_id[:8]}</p>
         </body></html>
         """
-        _send_email(admin_email, f"🔔 Naya Payment: {currency} {final_amount} — {plan[1]}", admin_body)
+        _send_email(admin_email, f"ðŸ”” Naya Payment: {currency} {final_amount} â€” {plan[1]}", admin_body)
         _log_email(admin_email, f"New payment: {plan[1]}", "", "admin_alert", "sent")
     except Exception as e:
         print(f"Admin email failed: {e}")
@@ -1929,7 +1929,7 @@ def create_sub_admin(body: SubAdminCreateRequest):
             customer_body = f"""
             <html><body style="font-family: Arial, sans-serif;">
                 <div style="max-width:600px; margin:auto;">
-                    <h2 style="color:#9333ea;">🙏 Thank you, {body.user_email.split('@')[0]}!</h2>
+                    <h2 style="color:#9333ea;">ðŸ™ Thank you, {body.user_email.split('@')[0]}!</h2>
                     <p>Aapka payment humein mil gaya hai.</p>
                     <div style="background:#f3f4f6; padding:16px; border-radius:8px; margin:20px 0;">
                         <p style="margin:4px 0;"><b>Plan:</b> {plan[1]} ({body.billing_cycle})</p>
@@ -1938,13 +1938,13 @@ def create_sub_admin(body: SubAdminCreateRequest):
                         <p style="margin:4px 0;"><b>UTR:</b> {body.utr_number}</p>
                         <p style="margin:4px 0;"><b>Reference ID:</b> <code>{payment_id[:8]}</code></p>
                     </div>
-                    <p>⏳ <b>Next step:</b> Hamari team 24 ghante ke andar verify karegi. Verify hote hi aapko confirmation email aayega aur aapka {plan[1]} pack activate ho jaayega.</p>
+                    <p>â³ <b>Next step:</b> Hamari team 24 ghante ke andar verify karegi. Verify hote hi aapko confirmation email aayega aur aapka {plan[1]} pack activate ho jaayega.</p>
                     <p style="color:#666; font-size:13px;">Agar 24 ghante mein confirmation na mile, toh reply karein is email pe.</p>
-                    <p>— Team AI Glue</p>
+                    <p>â€” Team AI Glue</p>
                 </div>
             </body></html>
             """
-            _send_email(body.user_email, f"🙏 Payment Received — {plan[1]} ({payment_id[:8]})", customer_body)
+            _send_email(body.user_email, f"ðŸ™ Payment Received â€” {plan[1]} ({payment_id[:8]})", customer_body)
             _log_email(body.user_email, f"Payment received: {plan[1]}", "", "customer_ack", "sent")
     except Exception as e:
         print(f"Customer email failed: {e}")
@@ -1969,7 +1969,7 @@ class TrackEventRequest(BaseModel):
 @app.post("/analytics/track", tags=["Analytics"])
 async def track_event(body: TrackEventRequest, request: Request):
     """Track user events: page_view, click, download, etc."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib
     from datetime import datetime
 
@@ -1997,7 +1997,7 @@ async def track_event(body: TrackEventRequest, request: Request):
 @app.get("/admin/analytics/summary", tags=["Admin"])
 def admin_analytics_summary(days: int = 7):
     """Get analytics summary for last N days."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime, timedelta
 
     conn = sqlite3.connect('ai_glue.db')
@@ -2059,7 +2059,7 @@ class MatchRequest(BaseModel):
 @app.post("/ai/match/job-seeker/{user_id}", tags=["AI"])
 async def match_job_seeker(user_id: str):
     """AI matches job seeker with relevant jobs from opportunities."""
-    import sqlite3
+    import core.db_compat as sqlite3
 
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -2144,12 +2144,12 @@ Only return valid JSON."""
             try:
                 _send_email(
                     user[1],
-                    f"🎯 {len(enriched)} jobs match your profile!",
+                    f"ðŸŽ¯ {len(enriched)} jobs match your profile!",
                     f"""<html><body>
                         <h2>Hi {user[2] or 'there'},</h2>
                         <p>We found <strong>{len(enriched)} jobs</strong> matching your profile.</p>
                         <p><a href="https://ai-glue-frontend.vercel.app/jobseeker-new/search">View jobs now</a></p>
-                        <p>— Team AI Glue</p>
+                        <p>â€” Team AI Glue</p>
                     </body></html>"""
                 )
                 _log_email(user[1], f"{len(enriched)} jobs match", "", "job_match", "sent")
@@ -2169,7 +2169,7 @@ Only return valid JSON."""
 @app.post("/ai/match/student/{user_id}", tags=["AI"])
 async def match_student(user_id: str):
     """AI matches student with relevant courses/programmes."""
-    import sqlite3
+    import core.db_compat as sqlite3
 
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -2247,7 +2247,7 @@ Only valid JSON."""
 @app.post("/ai/match/company/{org_id}", tags=["AI"])
 async def match_company(org_id: str):
     """AI matches company with candidates from users."""
-    import sqlite3
+    import core.db_compat as sqlite3
 
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -2340,7 +2340,7 @@ class OrchestrationRunRequest(BaseModel):
 
 @app.post("/orchestration/run", tags=["Orchestration"])
 async def run_orchestration(body: OrchestrationRunRequest):
-    """Master orchestration — find, verify, and connect entities."""
+    """Master orchestration â€” find, verify, and connect entities."""
     if not groq_client:
         raise HTTPException(status_code=500, detail="AI not configured")
 
@@ -2422,7 +2422,7 @@ Only return valid JSON."""
         results["ai_note"] = data.get("ai_note", "")
 
         # Step 2: Log to database
-        import sqlite3
+        import core.db_compat as sqlite3
         import uuid
         from datetime import datetime
         conn = sqlite3.connect('ai_glue.db')
@@ -2458,7 +2458,7 @@ Only return valid JSON."""
                     """, (
                         notif_id,
                         "admin",
-                        f"🎯 New {body.entity_type}: {e.get('name')}",
+                        f"ðŸŽ¯ New {body.entity_type}: {e.get('name')}",
                         f"Location: {e.get('location')} | Website: {e.get('website')}",
                         datetime.utcnow().isoformat(),
                         datetime.utcnow().isoformat()
@@ -2473,15 +2473,15 @@ Only return valid JSON."""
                         role_label = body.entity_type.replace("_", " ").title()
                         success, err = _send_email(
                             contact_email,
-                            f"You're invited to AI Glue — {role_label}",
+                            f"You're invited to AI Glue â€” {role_label}",
                             f"""<html><body>
                                 <h2>Hi {e.get('name')},</h2>
-                                <p>We found your profile and would love to have you on <strong>AI Glue</strong> — a global platform connecting {role_label.lower()} with opportunities.</p>
-                                <p><a href="https://ai-glue-frontend.vercel.app/register">Join now — it's free</a></p>
-                                <p>— Team AI Glue</p>
+                                <p>We found your profile and would love to have you on <strong>AI Glue</strong> â€” a global platform connecting {role_label.lower()} with opportunities.</p>
+                                <p><a href="https://ai-glue-frontend.vercel.app/register">Join now â€” it's free</a></p>
+                                <p>â€” Team AI Glue</p>
                             </body></html>"""
                         )
-                        _log_email(contact_email, f"Invitation — {role_label}", "", "invitation", "sent" if success else "failed", err)
+                        _log_email(contact_email, f"Invitation â€” {role_label}", "", "invitation", "sent" if success else "failed", err)
                 except Exception as err:
                     results["errors"].append(str(err))
 
@@ -2494,7 +2494,7 @@ Only return valid JSON."""
 @app.get("/orchestration/history", tags=["Orchestration"])
 def orchestration_history(limit: int = 20):
     """Get recent orchestration runs from analytics."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -2530,8 +2530,8 @@ def orchestration_history(limit: int = 20):
 # ========== ADMIN USERS V2 (with roles) ==========
 @app.get("/admin/users-v2", tags=["Admin"])
 def admin_users_v2():
-    """Get all users with their roles — used by admin dashboard."""
-    import sqlite3
+    """Get all users with their roles â€” used by admin dashboard."""
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -2569,7 +2569,7 @@ def admin_users_v2():
 @app.get("/admin/users-v2", tags=["Admin"])
 def admin_users_v2():
     """Get all users with their roles."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -2616,7 +2616,7 @@ class EmailTemplateRequest(BaseModel):
     data: Dict[str, Any] = {}
 
 def _log_email(to_email: str, subject: str, body: str, template: str, status: str, error: str = "", sent_by: str = ""):
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     try:
         conn = sqlite3.connect('ai_glue.db')
@@ -2695,44 +2695,44 @@ async def send_template_email(body: EmailTemplateRequest):
             "body": f"""<html><body>
                 <h2>Welcome to AI Glue, {body.data.get('name', 'Friend')}!</h2>
                 <p>Your account is ready. Explore your dashboard to get started.</p>
-                <p>— Team AI Glue</p>
+                <p>â€” Team AI Glue</p>
             </body></html>"""
         },
         "invitation": {
-            "subject": f"You're invited to AI Glue — {body.data.get('role', 'Partner')}",
+            "subject": f"You're invited to AI Glue â€” {body.data.get('role', 'Partner')}",
             "body": f"""<html><body>
                 <h2>Hi {body.data.get('name', 'there')},</h2>
                 <p>We found your profile on {body.data.get('source', 'LinkedIn')}.</p>
                 <p>AI Glue is a platform connecting <strong>{body.data.get('role', 'partners')}</strong> with global opportunities.</p>
-                <p><a href="https://ai-glue-frontend.vercel.app/register">Join now — it's free</a></p>
-                <p>— Team AI Glue</p>
+                <p><a href="https://ai-glue-frontend.vercel.app/register">Join now â€” it's free</a></p>
+                <p>â€” Team AI Glue</p>
             </body></html>"""
         },
         "job_match": {
-            "subject": f"🎯 {body.data.get('count', 0)} jobs match your profile!",
+            "subject": f"ðŸŽ¯ {body.data.get('count', 0)} jobs match your profile!",
             "body": f"""<html><body>
                 <h2>Hi {body.data.get('name', 'there')},</h2>
                 <p>We found <strong>{body.data.get('count', 0)} new jobs</strong> matching your profile.</p>
                 <p><a href="https://ai-glue-frontend.vercel.app/jobseeker-new/search">View jobs now</a></p>
-                <p>— Team AI Glue</p>
+                <p>â€” Team AI Glue</p>
             </body></html>"""
         },
         "student_match": {
-            "subject": f"🎓 {body.data.get('count', 0)} programmes match you!",
+            "subject": f"ðŸŽ“ {body.data.get('count', 0)} programmes match you!",
             "body": f"""<html><body>
                 <h2>Hi {body.data.get('name', 'there')},</h2>
                 <p>We found <strong>{body.data.get('count', 0)} programmes</strong> matching your profile.</p>
                 <p><a href="https://ai-glue-frontend.vercel.app/student-new/apply">View programmes</a></p>
-                <p>— Team AI Glue</p>
+                <p>â€” Team AI Glue</p>
             </body></html>"""
         },
         "hr_alert": {
-            "subject": f"👥 {body.data.get('count', 0)} candidates match your job",
+            "subject": f"ðŸ‘¥ {body.data.get('count', 0)} candidates match your job",
             "body": f"""<html><body>
                 <h2>Hi {body.data.get('name', 'Hiring Manager')},</h2>
                 <p><strong>{body.data.get('count', 0)} candidates</strong> match your job posting.</p>
                 <p><a href="https://ai-glue-frontend.vercel.app/employer-new/applicants">View candidates</a></p>
-                <p>— Team AI Glue</p>
+                <p>â€” Team AI Glue</p>
             </body></html>"""
         },
     }
@@ -2752,7 +2752,7 @@ async def send_template_email(body: EmailTemplateRequest):
 @app.get("/admin/email/logs", tags=["Admin"])
 def get_email_logs(limit: int = 50):
     """Get recent email logs."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -2813,7 +2813,7 @@ def get_promotion_services():
 @app.post("/admin/promotions/create", tags=["Promotions"])
 async def create_promotion(body: PromotionCreateRequest):
     """Create a new promotion / free offer / paid offer."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import uuid
     from datetime import datetime
 
@@ -2846,7 +2846,7 @@ async def create_promotion(body: PromotionCreateRequest):
 @app.get("/admin/promotions", tags=["Promotions"])
 def list_promotions():
     """List all promotions (admin view)."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -2874,7 +2874,7 @@ def list_promotions():
 @app.put("/admin/promotions/{promo_id}", tags=["Promotions"])
 async def update_promotion(promo_id: str, body: PromotionCreateRequest):
     """Update an existing promotion."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -2900,7 +2900,7 @@ async def update_promotion(promo_id: str, body: PromotionCreateRequest):
 @app.delete("/admin/promotions/{promo_id}", tags=["Promotions"])
 def delete_promotion(promo_id: str):
     """Delete a promotion."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("DELETE FROM promotions WHERE id=?", (promo_id,))
@@ -2912,7 +2912,7 @@ def delete_promotion(promo_id: str):
 @app.patch("/admin/promotions/{promo_id}/status", tags=["Promotions"])
 def toggle_promotion_status(promo_id: str, status: str = "active"):
     """Activate / pause a promotion."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     if status not in ("active", "paused", "expired"):
         raise HTTPException(status_code=400, detail="status must be active|paused|expired")
@@ -2929,7 +2929,7 @@ def toggle_promotion_status(promo_id: str, status: str = "active"):
 @app.get("/promotions/active", tags=["Promotions"])
 def get_active_promotions():
     """Public: fetch promotions to show users (dashboard + login popup)."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     now = datetime.utcnow().isoformat()
     conn = sqlite3.connect('ai_glue.db')
@@ -2969,7 +2969,7 @@ class AdCreateRequest(BaseModel):
 
 @app.post("/admin/ads/create", tags=["Ads"])
 async def create_ad(body: AdCreateRequest):
-    import sqlite3
+    import core.db_compat as sqlite3
     import uuid
     from datetime import datetime
     ad_id = str(uuid.uuid4())
@@ -2986,7 +2986,7 @@ async def create_ad(body: AdCreateRequest):
 
 @app.get("/admin/ads", tags=["Ads"])
 def list_ads():
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("SELECT id, title, banner_data, target_url, placement, start_date, end_date, status, created_at FROM ads ORDER BY created_at DESC")
@@ -3001,7 +3001,7 @@ def list_ads():
 
 @app.delete("/admin/ads/{ad_id}", tags=["Ads"])
 def delete_ad(ad_id: str):
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("DELETE FROM ads WHERE id=?", (ad_id,))
@@ -3011,7 +3011,7 @@ def delete_ad(ad_id: str):
 
 @app.get("/ads/active", tags=["Ads"])
 def get_active_ads(placement: str = "dashboard"):
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3043,7 +3043,7 @@ def _generate_invoice_number():
 
 def _apply_promotion_discount(amount: float, user_id: str = "") -> tuple:
     """Check active promotions and apply best discount. Returns (final_amount, discount_pct, promo_title)."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     now = datetime.utcnow().isoformat()
     conn = sqlite3.connect('ai_glue.db')
@@ -3065,7 +3065,7 @@ def _apply_promotion_discount(amount: float, user_id: str = "") -> tuple:
 @app.get("/subscriptions/plans", tags=["Subscriptions"])
 def list_plans():
     """Public: list all active subscription plans."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3090,7 +3090,7 @@ def list_plans():
 @app.post("/subscriptions/subscribe", tags=["Subscriptions"])
 async def subscribe(body: SubscribeRequest):
     """Subscribe user to a plan (mock payment)."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime, timedelta
 
     if body.billing_cycle not in ("monthly", "yearly"):
@@ -3124,7 +3124,7 @@ async def subscribe(body: SubscribeRequest):
     subscription_id = str(uuid.uuid4())
     invoice_id = str(uuid.uuid4())
 
-    # Free plan — no payment record needed
+    # Free plan â€” no payment record needed
     is_free = final_amount == 0
 
     if not is_free:
@@ -3152,7 +3152,7 @@ async def subscribe(body: SubscribeRequest):
           now.isoformat(), now.isoformat(),
           subscription_id, None if is_free else payment_id,
           _generate_invoice_number(),
-          f"{plan[1]} — {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
+          f"{plan[1]} â€” {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
           now.isoformat()))
 
     conn.commit()
@@ -3174,7 +3174,7 @@ async def subscribe(body: SubscribeRequest):
             act_body = f"""
             <html><body style="font-family: Arial, sans-serif;">
                 <div style="max-width:600px; margin:auto;">
-                    <h2 style="color:#16a34a;">🎉 Aapka {plan_name} Pack Active Ho Gaya!</h2>
+                    <h2 style="color:#16a34a;">ðŸŽ‰ Aapka {plan_name} Pack Active Ho Gaya!</h2>
                     <p>Shukriya! Aapka payment verify ho gaya aur subscription activate ho gayi.</p>
                     
                     <div style="background:#f0fdf4; border-left:4px solid #16a34a; padding:16px; border-radius:8px; margin:20px 0;">
@@ -3186,18 +3186,18 @@ async def subscribe(body: SubscribeRequest):
                         <p style="margin:4px 0;"><b>Valid Till:</b> <b style="color:#16a34a;">{end_str} ({days_left} days)</b></p>
                     </div>
                     
-                    <p>✅ Ab aap saare {plan_name} features use kar sakte ho — <a href="http://localhost:5173/my-subscription">My Subscription</a> dekho.</p>
+                    <p>âœ… Ab aap saare {plan_name} features use kar sakte ho â€” <a href="http://localhost:5173/my-subscription">My Subscription</a> dekho.</p>
                     
                     <p style="margin-top:20px;">
-                        <a href="http://localhost:5173/my-subscription" style="background:#9333ea; color:white; padding:10px 20px; text-decoration:none; border-radius:6px;">View My Subscription →</a>
+                        <a href="http://localhost:5173/my-subscription" style="background:#9333ea; color:white; padding:10px 20px; text-decoration:none; border-radius:6px;">View My Subscription â†’</a>
                     </p>
                     
                     <p style="color:#666; font-size:13px; margin-top:24px;">Koi bhi sawaal ho toh reply karein is email pe.</p>
-                    <p>— Team AI Glue 💜</p>
+                    <p>â€” Team AI Glue ðŸ’œ</p>
                 </div>
             </body></html>
             """
-            _send_email(user_email, f"🎉 {plan_name} Activated — Valid till {end_str}", act_body)
+            _send_email(user_email, f"ðŸŽ‰ {plan_name} Activated â€” Valid till {end_str}", act_body)
             _log_email(user_email, f"Activated: {plan_name}", "", "customer_activation", "sent")
     except Exception as e:
         print(f"Activation email failed: {e}")
@@ -3213,7 +3213,7 @@ async def subscribe(body: SubscribeRequest):
 @app.get("/subscriptions/me/{user_id}", tags=["Subscriptions"])
 def my_subscription(user_id: str):
     """Get current active subscription for a user."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3245,7 +3245,7 @@ def my_subscription(user_id: str):
 @app.get("/subscriptions/invoices/{user_id}", tags=["Subscriptions"])
 def my_invoices(user_id: str):
     """Get invoices for a user."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3264,7 +3264,7 @@ def my_invoices(user_id: str):
 @app.post("/subscriptions/cancel/{user_id}", tags=["Subscriptions"])
 def cancel_subscription(user_id: str):
     """Cancel active subscription."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -3279,7 +3279,7 @@ def cancel_subscription(user_id: str):
 @app.get("/admin/revenue/dashboard", tags=["Admin"])
 def revenue_dashboard():
     """Admin: revenue metrics."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
 
@@ -3323,7 +3323,7 @@ def revenue_dashboard():
 @app.get("/admin/subscriptions", tags=["Admin"])
 def admin_subscriptions():
     """Admin: list all subscriptions."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3382,7 +3382,7 @@ def razorpay_config():
 @app.post("/payments/razorpay/create-order", tags=["Payments"])
 async def create_razorpay_order(body: RazorpayOrderRequest):
     """Create a Razorpay order for a subscription."""
-    import sqlite3
+    import core.db_compat as sqlite3
     client = _get_razorpay_client()
     if not client:
         raise HTTPException(status_code=503, detail="Razorpay not configured. Add test keys in .env")
@@ -3402,7 +3402,7 @@ async def create_razorpay_order(body: RazorpayOrderRequest):
     final_amount, discount_pct, promo_title = _apply_promotion_discount(base_amount, body.user_id)
 
     if final_amount <= 0:
-        raise HTTPException(status_code=400, detail="Free plan — use /subscriptions/subscribe directly")
+        raise HTTPException(status_code=400, detail="Free plan â€” use /subscriptions/subscribe directly")
 
     amount_paise = int(round(final_amount * 100))
 
@@ -3437,7 +3437,7 @@ async def create_razorpay_order(body: RazorpayOrderRequest):
 @app.post("/payments/razorpay/verify", tags=["Payments"])
 async def verify_razorpay_payment(body: RazorpayVerifyRequest):
     """Verify Razorpay signature and activate subscription."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime, timedelta
 
     key_secret = os_rzp.getenv("RAZORPAY_KEY_SECRET", "")
@@ -3493,7 +3493,7 @@ async def verify_razorpay_payment(body: RazorpayVerifyRequest):
         VALUES (?, ?, ?, 'INR', 'paid', ?, ?, ?, ?, ?, ?, ?)
     """, (invoice_id, body.user_id, final_amount, now.isoformat(), now.isoformat(),
           subscription_id, payment_id, _generate_invoice_number(),
-          f"{plan[1]} — {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
+          f"{plan[1]} â€” {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
           now.isoformat()))
 
     conn.commit()
@@ -3561,7 +3561,7 @@ def esewa_config():
 @app.post("/payments/esewa/create-order", tags=["Payments"])
 async def create_esewa_order(body: EsewaOrderRequest):
     """Create eSewa payment order (for Nepal)."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime
 
     cfg = _get_esewa_config()
@@ -3587,7 +3587,7 @@ async def create_esewa_order(body: EsewaOrderRequest):
     final_amount, discount_pct, promo_title = _apply_promotion_discount(base_amount, body.user_id)
 
     if final_amount <= 0:
-        raise HTTPException(status_code=400, detail="Free plan — use /subscriptions/subscribe directly")
+        raise HTTPException(status_code=400, detail="Free plan â€” use /subscriptions/subscribe directly")
 
     amount_str = f"{final_amount:.2f}"
     total_amount = amount_str
@@ -3620,7 +3620,7 @@ async def create_esewa_order(body: EsewaOrderRequest):
 @app.post("/payments/esewa/verify", tags=["Payments"])
 async def verify_esewa_payment(body: EsewaVerifyRequest):
     """Verify eSewa payment and activate subscription."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime, timedelta
     import requests as req_lib
 
@@ -3687,7 +3687,7 @@ async def verify_esewa_payment(body: EsewaVerifyRequest):
         VALUES (?, ?, ?, 'NPR', 'paid', ?, ?, ?, ?, ?, ?, ?)
     """, (invoice_id, body.user_id, final_amount, now.isoformat(), now.isoformat(),
           subscription_id, payment_id, _generate_invoice_number(),
-          f"{plan[1]} — {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
+          f"{plan[1]} â€” {body.billing_cycle}" + (f" ({discount_pct}% off)" if discount_pct > 0 else ""),
           now.isoformat()))
 
     conn.commit()
@@ -3732,7 +3732,7 @@ class ApprovalRequest(BaseModel):
 @app.get("/payments/settings", tags=["Payments"])
 def get_payment_settings():
     """Public: get UPI/eSewa/PayPal QR and IDs."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3755,7 +3755,7 @@ def get_payment_settings():
 @app.post("/admin/payments/settings", tags=["Admin"])
 async def update_payment_settings(body: PaymentSettingsRequest):
     """Admin: update payment settings."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -3786,7 +3786,7 @@ async def update_payment_settings(body: PaymentSettingsRequest):
 @app.post("/payments/manual/submit", tags=["Payments"])
 async def submit_manual_payment(body: ManualPaymentRequest):
     """User: submit UTR after manual payment (UPI/eSewa/PayPal)."""
-    import sqlite3, uuid
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime
 
     if body.method not in ("upi", "esewa", "paypal"):
@@ -3807,7 +3807,7 @@ async def submit_manual_payment(body: ManualPaymentRequest):
     # Currency by method
     currency = "NPR" if body.method == "esewa" else "INR"
     if body.method == "esewa":
-        final_amount = round(final_amount * 1.6, 2)  # INR → NPR
+        final_amount = round(final_amount * 1.6, 2)  # INR â†’ NPR
 
     now = datetime.utcnow().isoformat()
     payment_id = str(uuid.uuid4())
@@ -3832,7 +3832,7 @@ async def submit_manual_payment(body: ManualPaymentRequest):
         admin_email = os.getenv("SMTP_USER", "pramod.rf@gmail.com")
         admin_body = f"""
         <html><body style="font-family: Arial, sans-serif;">
-            <h2 style="color:#9333ea;">🔔 Naya Payment Aaya</h2>
+            <h2 style="color:#9333ea;">ðŸ”” Naya Payment Aaya</h2>
             <table style="border-collapse: collapse;">
                 <tr><td style="padding:6px;"><b>User:</b></td><td>{body.user_email or body.user_id}</td></tr>
                 <tr><td style="padding:6px;"><b>Plan:</b></td><td>{plan[1]} ({body.billing_cycle})</td></tr>
@@ -3843,7 +3843,7 @@ async def submit_manual_payment(body: ManualPaymentRequest):
             <p style="color:#666; font-size:12px;">Ref: {payment_id[:8]}</p>
         </body></html>
         """
-        _send_email(admin_email, f"🔔 Naya Payment: {currency} {final_amount} — {plan[1]}", admin_body)
+        _send_email(admin_email, f"ðŸ”” Naya Payment: {currency} {final_amount} â€” {plan[1]}", admin_body)
         _log_email(admin_email, f"New payment: {plan[1]}", "", "admin_alert", "sent")
     except Exception as e:
         print(f"Admin email failed: {e}")
@@ -3854,7 +3854,7 @@ async def submit_manual_payment(body: ManualPaymentRequest):
             customer_body = f"""
             <html><body style="font-family: Arial, sans-serif;">
                 <div style="max-width:600px; margin:auto;">
-                    <h2 style="color:#9333ea;">🙏 Thank you!</h2>
+                    <h2 style="color:#9333ea;">ðŸ™ Thank you!</h2>
                     <p>Aapka payment humein mil gaya hai.</p>
                     <div style="background:#f3f4f6; padding:16px; border-radius:8px; margin:20px 0;">
                         <p style="margin:4px 0;"><b>Plan:</b> {plan[1]} ({body.billing_cycle})</p>
@@ -3863,12 +3863,12 @@ async def submit_manual_payment(body: ManualPaymentRequest):
                         <p style="margin:4px 0;"><b>UTR:</b> {body.utr_number}</p>
                         <p style="margin:4px 0;"><b>Reference ID:</b> <code>{payment_id[:8]}</code></p>
                     </div>
-                    <p>⏳ <b>Next step:</b> Hamari team 24 ghante ke andar verify karegi.</p>
-                    <p>— Team AI Glue</p>
+                    <p>â³ <b>Next step:</b> Hamari team 24 ghante ke andar verify karegi.</p>
+                    <p>â€” Team AI Glue</p>
                 </div>
             </body></html>
             """
-            _send_email(body.user_email, f"🙏 Payment Received — {plan[1]} ({payment_id[:8]})", customer_body)
+            _send_email(body.user_email, f"ðŸ™ Payment Received â€” {plan[1]} ({payment_id[:8]})", customer_body)
             _log_email(body.user_email, f"Payment received: {plan[1]}", "", "customer_ack", "sent")
     except Exception as e:
         print(f"Customer email failed: {e}")
@@ -3885,7 +3885,7 @@ async def submit_manual_payment(body: ManualPaymentRequest):
 @app.get("/admin/payments/pending", tags=["Admin"])
 def list_pending_payments(status: str = "pending"):
     """Admin: list pending payments."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -3906,8 +3906,8 @@ def list_pending_payments(status: str = "pending"):
 
 @app.post("/admin/payments/{payment_id}/approve", tags=["Admin"])
 async def approve_payment(payment_id: str, body: ApprovalRequest):
-    """Admin: approve pending payment → activate subscription."""
-    import sqlite3, uuid
+    """Admin: approve pending payment â†’ activate subscription."""
+    import core.db_compat as sqlite3, uuid
     from datetime import datetime, timedelta
 
     conn = sqlite3.connect('ai_glue.db')
@@ -3959,7 +3959,7 @@ async def approve_payment(payment_id: str, body: ApprovalRequest):
         VALUES (?, ?, ?, ?, 'paid', ?, ?, ?, ?, ?, ?, ?)
     """, (invoice_id, user_id, amount, currency, now.isoformat(), now.isoformat(),
           subscription_id, new_payment_id, _generate_invoice_number(),
-          f"{plan_name} — {billing_cycle} (manual {method})", now.isoformat()))
+          f"{plan_name} â€” {billing_cycle} (manual {method})", now.isoformat()))
 
     # Update pending payment
     cur.execute("""
@@ -3981,7 +3981,7 @@ async def approve_payment(payment_id: str, body: ApprovalRequest):
 @app.post("/admin/payments/{payment_id}/reject", tags=["Admin"])
 async def reject_payment(payment_id: str, body: ApprovalRequest):
     """Admin: reject pending payment."""
-    import sqlite3
+    import core.db_compat as sqlite3
     from datetime import datetime
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -3996,7 +3996,7 @@ async def reject_payment(payment_id: str, body: ApprovalRequest):
 @app.get("/payments/my/{user_id}", tags=["Payments"])
 def my_payments(user_id: str):
     """User: get their own pending/approved/rejected payments."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     cur.execute("""
@@ -4020,10 +4020,10 @@ def my_payments(user_id: str):
 def seed_database():
     """
     Seed database with initial data from seed_data.json.
-    Idempotent — duplicate rows are skipped (INSERT OR IGNORE).
+    Idempotent â€” duplicate rows are skipped (INSERT OR IGNORE).
     """
     import json as json_lib_seed
-    import sqlite3
+    import core.db_compat as sqlite3
     import os as os_seed
 
     seed_path = os_seed.path.join(os_seed.path.dirname(__file__), "seed_data.json")
@@ -4101,7 +4101,7 @@ def seed_database():
 @app.get("/admin/db-counts", tags=["Admin"])
 def db_counts():
     """Check row counts in key tables."""
-    import sqlite3
+    import core.db_compat as sqlite3
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
     tables = ['countries', 'universities', 'cities', 'campuses', 'departments',
@@ -4210,7 +4210,7 @@ async def housing_ai_suggest(body: HousingSuggestRequest):
     1. First check internal DB (vendor/agent listings)
     2. If none found, generate AI external suggestions
     """
-    import sqlite3
+    import core.db_compat as sqlite3
 
     # ---------- STEP 1: Check Internal DB ----------
     conn = sqlite3.connect('ai_glue.db')
@@ -4321,7 +4321,7 @@ Rules:
             "count": len(data.get("items", [])),
             "items": data.get("items", []),
             "ai_note": data.get("ai_note", ""),
-            "message": "No internal listings yet — here are AI suggestions",
+            "message": "No internal listings yet â€” here are AI suggestions",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
@@ -4334,7 +4334,7 @@ def fix_and_seed():
     1. Create missing tables/columns
     2. Seed all data from seed_data.json
     """
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib_fs
     import os as os_fs
 
@@ -4356,9 +4356,9 @@ def fix_and_seed():
                 official_link TEXT
             )
         """)
-        fixes.append("✓ country_documents table")
+        fixes.append("âœ“ country_documents table")
     except Exception as e:
-        fixes.append(f"✗ country_documents: {e}")
+        fixes.append(f"âœ— country_documents: {e}")
 
     # opportunities columns
     try:
@@ -4367,11 +4367,11 @@ def fix_and_seed():
         for col in ['country', 'company', 'salary']:
             if col not in cols:
                 cur.execute(f"ALTER TABLE opportunities ADD COLUMN {col} TEXT")
-                fixes.append(f"✓ opportunities.{col} added")
+                fixes.append(f"âœ“ opportunities.{col} added")
             else:
-                fixes.append(f"○ opportunities.{col} exists")
+                fixes.append(f"â—‹ opportunities.{col} exists")
     except Exception as e:
-        fixes.append(f"✗ opportunities columns: {e}")
+        fixes.append(f"âœ— opportunities columns: {e}")
 
     conn.commit()
 
@@ -4431,7 +4431,7 @@ def fix_and_seed():
 @app.post("/admin/force-reseed-opportunities", tags=["Admin"])
 def force_reseed_opportunities():
     """Force replace opportunities rows from seed_data.json."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib_op
     import os as os_op
 
@@ -4490,7 +4490,7 @@ def auto_fix_columns():
     Auto-detect missing columns from seed_data.json and add them.
     Then re-seed all data.
     """
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib_ac
     import os as os_ac
 
@@ -4581,7 +4581,7 @@ def auto_fix_columns():
 @app.post("/admin/init-all", tags=["Admin"])
 def init_all():
     """Create all missing tables + seed everything from seed_data.json."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib_init
     import os as os_init
 
@@ -4695,9 +4695,9 @@ def init_all():
     for name, sql in tables_sql.items():
         try:
             cur.execute(sql)
-            log.append(f"✓ {name} table ready")
+            log.append(f"âœ“ {name} table ready")
         except Exception as e:
-            log.append(f"✗ {name}: {e}")
+            log.append(f"âœ— {name}: {e}")
 
     conn.commit()
 
@@ -4759,7 +4759,7 @@ def init_all():
 @app.post("/admin/fix-opportunities", tags=["Admin"])
 def fix_opportunities():
     """Force add missing columns to opportunities table and reseed."""
-    import sqlite3
+    import core.db_compat as sqlite3
     import json as json_lib_opp
     import os as os_opp
 
@@ -4780,9 +4780,9 @@ def fix_opportunities():
         if col not in existing:
             try:
                 cur.execute(f'ALTER TABLE opportunities ADD COLUMN "{col}" TEXT')
-                log.append(f"✓ Added: {col}")
+                log.append(f"âœ“ Added: {col}")
             except Exception as e:
-                log.append(f"✗ {col}: {e}")
+                log.append(f"âœ— {col}: {e}")
 
     conn.commit()
 
