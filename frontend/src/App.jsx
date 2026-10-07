@@ -40,7 +40,7 @@ import JobSeekerOffers from './pages/job-seeker/Offers';
 import JobSeekerDeals from './pages/job-seeker/Deals';
 import JobSeekerAccommodation from './pages/job-seeker/Accommodation';
 import WorkAbroad from './pages/work-abroad/WorkAbroad';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { trackPageView } from './lib/analytics';
 import TrustDirectory from './pages/trust/TrustDirectory';
@@ -108,12 +108,18 @@ import SubPage from './pages/SubPage';
 // Layout Component
 function Layout() {
   const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <PromotionPopup />
-      <Sidebar role={user?.role || 'STUDENT'} />
+      <Sidebar
+        role={user?.role || 'STUDENT'}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <Outlet />
         </main>
