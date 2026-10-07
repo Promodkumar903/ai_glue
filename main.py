@@ -4825,3 +4825,131 @@ def fix_opportunities():
         "total": len(rows),
         "errors": errors
     }
+
+
+
+# ============================================================
+# AGENT CRM ROUTES — Leads, Documents, Activities, Dashboard
+# ============================================================
+from fastapi import Body as _Body
+
+@app.get("/agent/leads", tags=["Agent CRM"])
+def agent_list_leads(
+    stage: str = None,
+    priority: str = None,
+    country: str = None,
+    search: str = None,
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    filters = {}
+    if stage: filters['stage'] = stage
+    if priority: filters['priority'] = priority
+    if country: filters['country'] = country
+    if search: filters['search'] = search
+    leads = crm.get_leads(current_user.id, filters)
+    return {"leads": leads, "total": len(leads)}
+
+
+@app.post("/agent/leads", tags=["Agent CRM"])
+def agent_create_lead(
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    return crm.create_lead(current_user.id, payload)
+
+
+@app.get("/agent/leads/{lead_id}", tags=["Agent CRM"])
+def agent_get_lead(
+    lead_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    lead = crm.get_lead(lead_id, current_user.id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
+
+
+@app.put("/agent/leads/{lead_id}", tags=["Agent CRM"])
+def agent_update_lead(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    return crm.update_lead(lead_id, current_user.id, payload)
+
+
+@app.patch("/agent/leads/{lead_id}/stage", tags=["Agent CRM"])
+def agent_change_stage(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    new_stage = payload.get('stage')
+    if not new_stage:
+        raise HTTPException(status_code=400, detail="stage required")
+    return crm.change_stage(lead_id, current_user.id, new_stage)
+
+
+@app.post("/agent/leads/{lead_id}/note", tags=["Agent CRM"])
+def agent_add_note(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    note = payload.get('note', '')
+    return crm.add_note(lead_id, current_user.id, note)
+
+
+@app.post("/agent/leads/{lead_id}/convert", tags=["Agent CRM"])
+def agent_convert_lead(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    user_id = payload.get('user_id')
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    return crm.convert_to_student(lead_id, current_user.id, user_id)
+
+
+@app.post("/agent/leads/{lead_id}/documents", tags=["Agent CRM"])
+def agent_add_document(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    doc_type = payload.get('document_type')
+    doc_name = payload.get('document_name', doc_type)
+    file_url = payload.get('file_url')
+    if not doc_type:
+        raise HTTPException(status_code=400, detail="document_type required")
+    return crm.add_document(lead_id, doc_type, doc_name, file_url)
+
+
+@app.patch("/agent/documents/{doc_id}/status", tags=["Agent CRM"])
+def agent_update_doc_status(
+    doc_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    status = payload.get('status')
+    if not status:
+        raise HTTPException(status_code=400, detail="status required")
+    return crm.update_document_status(doc_id, status, current_user.id, payload.get('reason'))
+
+
+@app.get("/agent/dashboard", tags=["Agent CRM"])
+def agent_dashboard(
+    current_user: User = Depends(get_current_user),
+):
+    from engines.crm import crm
+    return crm.get_dashboard(current_user.id)

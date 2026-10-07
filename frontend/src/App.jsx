@@ -20,6 +20,8 @@ import Checklist from './pages/student-new/Checklist';
 import VerifyDocument from './pages/student-new/VerifyDocument';
 import ResumeConverter from './pages/student-new/ResumeConverter';
 import AgentCandidates from './pages/agent-new/Candidates';
+import Leads from './pages/agent-new/Leads';
+import LeadDetail from './pages/agent-new/LeadDetail';
 import AgentFunnel from './pages/agent-new/Funnel';
 import AgentCommission from './pages/agent-new/Commission';
 import ReferralLink from './pages/agent-new/ReferralLink';
@@ -224,6 +226,8 @@ function App() {
 
         {/* ========== NEW AGENT ROUTES ========== */}
         <Route path="/agent-new/candidates" element={<AgentCandidates />} />
+        <Route path="/agent/leads" element={<Leads />} />
+        <Route path="/agent/leads/:id" element={<LeadDetail />} />
         <Route path="/agent-new/funnel" element={<AgentFunnel />} />
         <Route path="/agent-new/commission" element={<AgentCommission />} />
         <Route path="/agent-new/referral" element={<ReferralLink />} />

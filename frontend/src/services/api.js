@@ -234,3 +234,17 @@ export const aiAPI = {
   universityInfo: (data) => api.post('/ai/university-info', data),
   universitiesByCountry: (country) => api.post('/ai/universities-by-country', { country }),
 };
+
+
+export const crmAPI = {
+  listLeads: (params = {}) => api.get('/agent/leads', { params }),
+  createLead: (data) => api.post('/agent/leads', data),
+  getLead: (id) => api.get(`/agent/leads/${id}`),
+  updateLead: (id, data) => api.put(`/agent/leads/${id}`, data),
+  changeStage: (id, stage) => api.patch(`/agent/leads/${id}/stage`, { stage }),
+  addNote: (id, note) => api.post(`/agent/leads/${id}/note`, { note }),
+  convertLead: (id, userId) => api.post(`/agent/leads/${id}/convert`, { user_id: userId }),
+  addDocument: (id, data) => api.post(`/agent/leads/${id}/documents`, data),
+  updateDocStatus: (docId, status, reason = '') => api.patch(`/agent/documents/${docId}/status`, { status, reason }),
+  dashboard: () => api.get('/agent/dashboard'),
+};
