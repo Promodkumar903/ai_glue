@@ -72,7 +72,6 @@ const roleNavItems = {
 
   // ==================== AGENT ====================
   AGENT: [
-    { path: '/agent', label: 'Dashboard', icon: LayoutDashboard },
     { divider: true, label: '🎯 Actions' },
     { path: '/agent-new/candidates', label: 'Candidates', icon: Users },
     { path: '/agent/leads', label: 'Leads (CRM)', icon: Users },
