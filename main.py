@@ -4953,3 +4953,45 @@ def agent_dashboard(
 ):
     from engines.crm import crm
     return crm.get_dashboard(current_user.id)
+
+
+
+# ============================================================
+# DOCUMENT UPLOAD — File upload for leads
+# ============================================================
+import os as _os
+from fastapi import UploadFile as _UploadFile, File as _File
+
+_UPLOAD_DIR = "uploads/leads"
+_os.makedirs(_UPLOAD_DIR, exist_ok=True)
+
+
+@app.post("/agent/leads/{lead_id}/documents/upload", tags=["Agent CRM"])
+async def agent_upload_document(
+    lead_id: str,
+    document_type: str = Form(...),
+    file: _UploadFile = _File(...),
+    current_user: User = Depends(get_current_user),
+):
+    import uuid as _uuid
+    from datetime import datetime as _dt
+    from engines.crm import crm
+
+    # Save file
+    ext = _os.path.splitext(file.filename)[1] or ".bin"
+    fname = f"{_uuid.uuid4()}{ext}"
+    fpath = _os.path.join(_UPLOAD_DIR, fname)
+    with open(fpath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    file_url = f"/{fpath.replace(chr(92), '/')}"
+
+    # Add to DB
+    result = crm.add_document(lead_id, document_type, file.filename, file_url)
+    return {
+        "status": "uploaded",
+        "document_id": result.get("id"),
+        "file_url": file_url,
+        "filename": file.filename,
+    }

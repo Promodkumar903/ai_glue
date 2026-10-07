@@ -247,4 +247,12 @@ export const crmAPI = {
   addDocument: (id, data) => api.post(`/agent/leads/${id}/documents`, data),
   updateDocStatus: (docId, status, reason = '') => api.patch(`/agent/documents/${docId}/status`, { status, reason }),
   dashboard: () => api.get('/agent/dashboard'),
+  uploadDocument: (leadId, documentType, file) => {
+    const fd = new FormData();
+    fd.append('document_type', documentType);
+    fd.append('file', file);
+    return api.post(`/agent/leads/${leadId}/documents/upload`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 };
