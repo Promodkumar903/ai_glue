@@ -1,19 +1,12 @@
 """
 AI Document Verification Engine
-Uses Tesseract OCR + Groq LLM to extract fields and flag anomalies
+Uses OCR.space API (works on Render) + Groq LLM for analysis
 """
 import os
 import json
+import requests
 import base64
 from datetime import datetime
-
-try:
-    import pytesseract
-    from PIL import Image
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    OCR_AVAILABLE = True
-except Exception:
-    OCR_AVAILABLE = False
 
 try:
     from groq import Groq
@@ -22,24 +15,51 @@ except Exception:
     GROQ_AVAILABLE = False
 
 
+OCR_API_KEY = os.getenv('OCR_SPACE_API_KEY', 'K83987123488957')  # fallback free key
+OCR_API_URL = 'https://api.ocr.space/parse/image'
+
+
 def extract_text(file_path):
-    """Extract text from image or PDF using Tesseract."""
-    if not OCR_AVAILABLE:
-        return {"error": "Tesseract not installed"}
+    """Extract text using OCR.space API."""
     try:
-        if file_path.lower().endswith('.pdf'):
-            from pdf2image import convert_from_path
-            pages = convert_from_path(file_path, dpi=200)
-            text = ""
-            for page in pages[:3]:
-                text += pytesseract.image_to_string(page) + "\n"
-            return {"text": text.strip(), "pages": len(pages)}
-        else:
-            img = Image.open(file_path)
-            text = pytesseract.image_to_string(img)
-            return {"text": text.strip(), "pages": 1}
+        with open(file_path, 'rb') as f:
+            response = requests.post(
+                OCR_API_URL,
+                files={'file': f},
+                data={
+                    'apikey': OCR_API_KEY,
+                    'language': 'eng',
+                    'isOverlayRequired': False,
+                    'detectOrientation': True,
+                    'scale': True,
+                    'OCREngine': 2,
+                },
+                timeout=60
+            )
+
+        if response.status_code != 200:
+            return {"error": f"OCR API returned {response.status_code}"}
+
+        data = response.json()
+
+        if data.get('IsErroredOnProcessing'):
+            err = data.get('ErrorMessage', ['Unknown OCR error'])
+            return {"error": str(err)}
+
+        parsed_results = data.get('ParsedResults', [])
+        if not parsed_results:
+            return {"error": "No text found in document"}
+
+        text = parsed_results[0].get('ParsedText', '').strip()
+        if not text or len(text) < 20:
+            return {"error": "Document mein readable text nahi mila. Clear scan upload karo."}
+
+        return {"text": text, "pages": len(parsed_results)}
+
+    except requests.exceptions.Timeout:
+        return {"error": "OCR API timeout — 60 second mein response nahi aaya"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"OCR error: {str(e)}"}
 
 
 def ai_analyze(text, doc_type, student_name=None):
@@ -100,7 +120,6 @@ Be conservative. If unsure, set verdict to REVIEW. Never claim 100% authenticity
         )
         content = response.choices[0].message.content.strip()
 
-        # Strip markdown if present
         if content.startswith("```"):
             content = content.split("```")[1]
             if content.startswith("json"):
@@ -118,7 +137,6 @@ class AIVerifyEngine:
     @staticmethod
     def verify_document(file_path, doc_type, student_name=None):
         """Main verification pipeline."""
-        # Step 1: OCR
         ocr = extract_text(file_path)
         if "error" in ocr:
             return {
@@ -128,14 +146,6 @@ class AIVerifyEngine:
             }
 
         text = ocr.get("text", "")
-        if not text or len(text) < 20:
-            return {
-                "status": "error",
-                "stage": "ocr",
-                "message": "Document mein readable text nahi mila. Clear scan upload karo.",
-            }
-
-        # Step 2: AI Analysis
         analysis = ai_analyze(text, doc_type, student_name)
         if "error" in analysis:
             return {
