@@ -76,6 +76,7 @@ const roleNavItems = {
     { divider: true, label: '🎯 Actions' },
     { path: '/agent-new/candidates', label: 'Candidates', icon: Users },
     { path: '/agent/leads', label: 'Leads (CRM)', icon: Users },
+    { path: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/agent-new/funnel', label: 'Funnel', icon: Briefcase },
     { path: '/agent-new/commission', label: 'My Commission', icon: DollarSign },
     { path: '/agent-new/referral', label: 'Referral', icon: Sparkles },
