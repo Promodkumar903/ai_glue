@@ -1703,7 +1703,7 @@ def public_directory():
         LEFT JOIN user_roles ur ON ur.user_id = u.id AND ur.revoked_at IS NULL
         WHERE u.status = 'ACTIVE'
         GROUP BY u.id
-        HAVING roles LIKE '%AGENT%' OR roles LIKE '%BROKER%'
+        HAVING GROUP_CONCAT(ur.role_code) LIKE '%AGENT%' OR GROUP_CONCAT(ur.role_code) LIKE '%BROKER%'
     """)
     rows = cur.fetchall()
 
