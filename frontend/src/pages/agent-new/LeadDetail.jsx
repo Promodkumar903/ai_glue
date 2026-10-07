@@ -26,6 +26,9 @@ export default function LeadDetail() {
       .finally(() => setLoading(false));
   };
 
+  const [docCheck, setDocCheck] = useState(null);
+  const [checkLoading, setCheckLoading] = useState(false);
+
   useEffect(() => { load(); }, [id]);
 
   const changeStage = async (newStage) => {
@@ -72,6 +75,19 @@ export default function LeadDetail() {
     await crmAPI.updateDocStatus(docId, status);
     setSuccess(`Document ${status}`);
     load();
+  };
+
+  const runDocCheck = async () => {
+    setCheckLoading(true);
+    setError('');
+    try {
+      const res = await crmAPI.docCheckLead(id);
+      setDocCheck(res.data);
+    } catch (e) {
+      setError('Doc check failed: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setCheckLoading(false);
+    }
   };
 
   const aiVerify = async (docId) => {
@@ -140,6 +156,71 @@ export default function LeadDetail() {
         <Card title="Source" value={lead.source || '—'} icon="📡" color="gray" />
         <Card title="Priority" value={lead.priority || '—'} icon="⚡" color="red" />
       </div>
+
+      {/* Document Checklist */}
+      <div className="mt-6 bg-white rounded-lg border p-4">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="font-semibold">📋 Document Checklist {lead.country && `(${lead.country})`}</h2>
+          <Button onClick={runDocCheck} disabled={checkLoading || !lead.country}>
+            {checkLoading ? 'Checking...' : '🔍 Run Check'}
+          </Button>
+        </div>
+
+        {!lead.country && (
+          <p className="text-sm text-gray-500">Pehle lead ka country set karo</p>
+        )}
+
+        {docCheck && docCheck.status === 'ok' && (
+          <>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="bg-blue-50 p-3 rounded text-center">
+                <p className="text-xs text-gray-600">Required</p>
+                <p className="text-xl font-bold text-blue-700">{docCheck.total_required}</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded text-center">
+                <p className="text-xs text-gray-600">Verified</p>
+                <p className="text-xl font-bold text-green-700">{docCheck.verified_count}</p>
+              </div>
+              <div className="bg-orange-50 p-3 rounded text-center">
+                <p className="text-xs text-gray-600">Missing</p>
+                <p className="text-xl font-bold text-orange-700">{docCheck.missing.length}</p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded text-center">
+                <p className="text-xs text-gray-600">Progress</p>
+                <p className="text-xl font-bold text-purple-700">{docCheck.completion_pct}%</p>
+              </div>
+            </div>
+
+            <div className={`p-3 rounded mb-4 ${
+              docCheck.verdict === 'COMPLETE' ? 'bg-green-50 text-green-800' :
+              docCheck.verdict === 'PARTIAL' ? 'bg-yellow-50 text-yellow-800' :
+              'bg-red-50 text-red-800'
+            }`}>
+              <strong>{docCheck.verdict}</strong> — {docCheck.message}
+            </div>
+
+            <div className="space-y-2">
+              {docCheck.checklist.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center border rounded px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">
+                      {item.status === 'VERIFIED' ? '✅' : item.status === 'UPLOADED' ? '📤' : '❌'}
+                    </span>
+                    <span className="text-sm font-medium">{item.document_type}</span>
+                    {item.mandatory && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Required</span>
+                    )}
+                  </div>
+                  <Badge color={item.status === 'VERIFIED' ? 'green' : item.status === 'UPLOADED' ? 'blue' : 'orange'}>
+                    {item.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
 
       <div className="mt-6 bg-white rounded-lg border p-4">
         <h2 className="font-semibold mb-3">📄 Documents</h2>

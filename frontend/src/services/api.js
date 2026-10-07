@@ -256,4 +256,7 @@ export const crmAPI = {
     });
   },
   aiVerify: (docId) => api.post(`/agent/documents/${docId}/ai-verify`),
+  docCheckerCountries: () => api.get('/agent/document-checker/countries'),
+  docCheckerRequirements: (code) => api.get(`/agent/document-checker/requirements/${code}`),
+  docCheckLead: (leadId) => api.get(`/agent/leads/${leadId}/document-check`),
 };

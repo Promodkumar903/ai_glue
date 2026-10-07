@@ -5060,3 +5060,61 @@ def ai_verify_document_endpoint(
         conn.close()
 
     return result
+
+
+
+# ============================================================
+# DOCUMENT CHECKER — Country-wise checklist
+# ============================================================
+@app.get("/agent/document-checker/countries", tags=["Document Checker"])
+def doc_checker_countries(
+    current_user: User = Depends(get_current_user),
+):
+    from engines.doc_checker import doc_checker
+    return {"countries": doc_checker.get_country_list()}
+
+
+@app.get("/agent/document-checker/requirements/{country_code}", tags=["Document Checker"])
+def doc_checker_requirements(
+    country_code: str,
+    current_user: User = Depends(get_current_user),
+):
+    from engines.doc_checker import doc_checker
+    return doc_checker.get_requirements(country_code.upper())
+
+
+@app.get("/agent/leads/{lead_id}/document-check", tags=["Document Checker"])
+def doc_checker_for_lead(
+    lead_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    import core.db_compat as sqlite3
+    from engines.doc_checker import doc_checker
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    # Fetch lead
+    cur.execute(
+        "SELECT id, student_name, country FROM leads WHERE id = ? AND agent_id = ?",
+        (lead_id, current_user.id)
+    )
+    lead_row = cur.fetchone()
+    if not lead_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    lead_id_db, student_name, country = lead_row
+
+    # Fetch documents
+    cur.execute(
+        "SELECT document_type, status FROM lead_documents WHERE lead_id = ?",
+        (lead_id,)
+    )
+    docs = [{"document_type": r[0], "status": r[1]} for r in cur.fetchall()]
+    conn.close()
+
+    result = doc_checker.check_lead(country, docs)
+    result["lead_id"] = lead_id_db
+    result["student_name"] = student_name
+    return result
