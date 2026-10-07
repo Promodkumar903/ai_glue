@@ -17,8 +17,10 @@ const roleNavItems = {
     { path: '/student/life', label: 'Student Life', icon: Heart },
     { path: '/student/journey', label: 'Journey', icon: Sparkles },
     { path: '/student/housing', label: 'Housing', icon: Home },
+    { path: '/student/books', label: 'Books', icon: Library },
     { path: '/student/visa', label: 'Student Visa', icon: ShieldCheck },
     { path: '/student/scholarships', label: 'Scholarships', icon: Award },
+    { path: '/student/documents', label: 'Documents', icon: FileText },
     { divider: true, label: '📋 Applications' },
     { path: '/student-new/applications', label: 'My Applications', icon: FileText },
     { path: '/student-new/apply', label: 'Apply to College', icon: GraduationCap },
@@ -28,8 +30,13 @@ const roleNavItems = {
     { path: '/student-new/checklist', label: 'Document Checklist', icon: FileText },
     { path: '/student-new/verify', label: 'AI Verify Document', icon: ShieldCheck },
     { path: '/student-new/resume-converter', label: 'AI Resume Converter', icon: FileText },
+    { divider: true, label: '💼 Work & Visa' },
+    { path: '/jobseeker-new/offers', label: 'Job Offers', icon: Award },
+    { path: '/jobseeker-new/visa', label: 'Visa Tracker', icon: ShieldCheck },
+    { path: '/jobseeker-new/accommodation', label: 'Accommodation', icon: Hotel },
     { divider: true, label: '🌍 Explore' },
     { path: '/study-abroad', label: 'Study Abroad', icon: GraduationCap },
+    { path: '/work-abroad', label: 'Work Abroad', icon: Briefcase },
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
     { divider: true, label: '💬 Communication' },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
@@ -41,13 +48,21 @@ const roleNavItems = {
     { divider: true, label: '🔍 Find Work' },
     { path: '/jobseeker-new/search', label: 'Job Search', icon: Search },
     { path: '/jobseeker-new/resume', label: 'My Resume', icon: FileText },
-    { path: '/jobseeker-new/resume-builder', label: 'AI Job Resume', icon: Sparkles }, 
-    { path: '/jobseeker-new/applications', label: 'My Applications', icon: FileText },
+    { path: '/jobseeker-new/resume-builder', label: 'AI Job Resume', icon: Sparkles },
+    { path: '/job-seeker/resume-search', label: 'AI Resume Search', icon: Sparkles },
+    { path: '/jobseeker-new/applications', label: 'My Applications', icon: Briefcase },
     { path: '/jobseeker-new/documents', label: 'Documents Vault', icon: ShieldCheck },
     { divider: true, label: '📋 Work Flow' },
+    { path: '/job-seeker/vacancies', label: 'Vacancies', icon: Briefcase },
+    { path: '/job-seeker/applications', label: 'Applications', icon: FileText },
+    { path: '/job-seeker/interviews', label: 'Interviews', icon: Video },
     { path: '/jobseeker-new/offers', label: 'Offers', icon: Award },
+    { path: '/job-seeker/deals', label: 'Deals', icon: Handshake },
     { path: '/jobseeker-new/accommodation', label: 'Accommodation', icon: Hotel },
     { path: '/jobseeker-new/visa', label: 'Work Visa', icon: ShieldCheck },
+    { path: '/job-seeker/documents', label: 'Documents', icon: FileText },
+    { path: '/jobseeker-new/offers', label: 'Job Offers', icon: Award },
+    { path: '/jobseeker-new/visa', label: 'Visa Tracker', icon: ShieldCheck },
     { divider: true, label: '🌍 Explore' },
     { path: '/work-abroad', label: 'Work Abroad', icon: Briefcase },
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
@@ -172,7 +187,7 @@ export default function Sidebar({ role = 'STUDENT', isOpen, onClose }) {
             const Icon = item.icon;
             return (
               <NavLink
-                key={item.path}
+                key={`${item.path}-${idx}`}
                 to={item.path}
                 end={item.path.split('/').length === 2}
                 onClick={onClose}
