@@ -3,6 +3,7 @@ Database compatibility layer.
 Mimics sqlite3 interface but uses PostgreSQL (Supabase) under the hood.
 """
 import os
+import re
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -86,7 +87,6 @@ class _CompatCursor:
         upper = query.upper().strip()
         if upper.startswith('INSERT OR IGNORE'):
             query = 'INSERT' + query[len('INSERT OR IGNORE'):]
-            # Append ON CONFLICT DO NOTHING at end
             query = query.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
 
         # 3. INSERT OR REPLACE -> not supported; use UPSERT logic
@@ -97,5 +97,14 @@ class _CompatCursor:
 
         # 5. INTEGER PRIMARY KEY -> SERIAL PRIMARY KEY (only if standalone)
         # (skip - our tables use TEXT PRIMARY KEY)
+
+        # 6. GROUP_CONCAT(x) -> STRING_AGG(x, ',')
+        if 'GROUP_CONCAT' in query.upper():
+            query = re.sub(
+                r"GROUP_CONCAT\s*\(\s*([^,)]+)\s*\)",
+                r"STRING_AGG(\1, ',')",
+                query,
+                flags=re.IGNORECASE
+            )
 
         return query
