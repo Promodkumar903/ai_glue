@@ -1,58 +1,63 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Building2, Briefcase, FileText,
   Search, MessageSquare, ShieldCheck, GraduationCap,
   DollarSign, BookOpen, Home, LogOut, Video, Award,
-  Handshake, Hotel, Sparkles, Library, Heart,
+  Handshake, Hotel, Sparkles, User, Library, Heart,
   GraduationCap as EduIcon, Store, Target, TrendingUp, Package
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 
 const roleNavItems = {
-  // ==================== STUDENT ====================
+  // ==================== STUDENT (Study Abroad) ====================
   STUDENT: [
     { path: '/student', label: 'Dashboard', icon: LayoutDashboard },
-    { divider: true, label: '📚 Study' },
     { path: '/student/education', label: 'Education', icon: GraduationCap },
     { path: '/student/life', label: 'Student Life', icon: Heart },
     { path: '/student/journey', label: 'Journey', icon: Sparkles },
     { path: '/student/housing', label: 'Housing', icon: Home },
+    { path: '/student/books', label: 'Books', icon: Library },
     { path: '/student/visa', label: 'Student Visa', icon: ShieldCheck },
     { path: '/student/scholarships', label: 'Scholarships', icon: Award },
-    { divider: true, label: '📋 Applications' },
+    { path: '/student/documents', label: 'Documents', icon: FileText },
+    { path: '/messages', label: 'Messages', icon: MessageSquare },
+    { path: '/jobseeker-new/offers', label: 'Job Offers', icon: Award },
+    { path: '/jobseeker-new/visa', label: 'Visa Tracker', icon: ShieldCheck },
+    { path: '/jobseeker-new/accommodation', label: 'Accommodation', icon: Hotel },
     { path: '/student-new/applications', label: 'My Applications', icon: FileText },
-    { path: '/student-new/apply', label: 'Apply to College', icon: GraduationCap },
     { path: '/student-new/seats', label: 'Seat Availability', icon: BookOpen },
     { path: '/student-new/books', label: 'Books Library', icon: Library },
     { path: '/student-new/documents', label: 'Documents Vault', icon: ShieldCheck },
-    { path: '/student-new/checklist', label: 'Document Checklist', icon: FileText },
-    { path: '/student-new/verify', label: 'AI Verify Document', icon: ShieldCheck },
-    { path: '/student-new/resume-converter', label: 'AI Resume Converter', icon: FileText },
-    { divider: true, label: '🌍 Explore' },
     { path: '/study-abroad', label: 'Study Abroad', icon: GraduationCap },
+    { path: '/work-abroad', label: 'Work Abroad', icon: Briefcase },
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
-    { divider: true, label: '💬 Communication' },
-    { path: '/messages', label: 'Messages', icon: MessageSquare },
   ],
 
-  // ==================== JOB SEEKER ====================
+  // ==================== JOB SEEKER (Work Abroad) ====================
   JOB_SEEKER: [
     { path: '/job-seeker', label: 'Dashboard', icon: LayoutDashboard },
     { divider: true, label: '🔍 Find Work' },
     { path: '/jobseeker-new/search', label: 'Job Search', icon: Search },
     { path: '/jobseeker-new/resume', label: 'My Resume', icon: FileText },
-    { path: '/jobseeker-new/resume-builder', label: 'AI Job Resume', icon: Sparkles }, 
-    { path: '/jobseeker-new/applications', label: 'My Applications', icon: FileText },
+    { path: '/jobseeker-new/applications', label: 'My Applications', icon: Briefcase },
     { path: '/jobseeker-new/documents', label: 'Documents Vault', icon: ShieldCheck },
     { divider: true, label: '📋 Work Flow' },
-    { path: '/jobseeker-new/offers', label: 'Offers', icon: Award },
+    { path: '/job-seeker/vacancies', label: 'Vacancies', icon: Briefcase },
+    { path: '/job-seeker/applications', label: 'Applications', icon: FileText },
+    { path: '/job-seeker/interviews', label: 'Interviews', icon: Video },
+    { path: '/job-seeker/offers', label: 'Offers', icon: Award },
+    { path: '/job-seeker/deals', label: 'Deals', icon: Handshake },
+    { path: '/job-seeker/accommodation', label: 'Accommodation', icon: Hotel },
+    { path: '/job-seeker/visa', label: 'Work Visa', icon: ShieldCheck },
+    { path: '/job-seeker/documents', label: 'Documents', icon: FileText },
+    { path: '/job-seeker/resume-search', label: 'AI Resume Search', icon: Sparkles },
+    { path: '/messages', label: 'Messages', icon: MessageSquare },
+    { path: '/jobseeker-new/offers', label: 'Job Offers', icon: Award },
+    { path: '/jobseeker-new/visa', label: 'Visa Tracker', icon: ShieldCheck },
     { path: '/jobseeker-new/accommodation', label: 'Accommodation', icon: Hotel },
-    { path: '/jobseeker-new/visa', label: 'Work Visa', icon: ShieldCheck },
-    { divider: true, label: '🌍 Explore' },
     { path: '/work-abroad', label: 'Work Abroad', icon: Briefcase },
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
-    { divider: true, label: '💬 Communication' },
-    { path: '/messages', label: 'Messages', icon: MessageSquare },
   ],
 
   // ==================== AGENT ====================
@@ -63,11 +68,9 @@ const roleNavItems = {
     { path: '/agent-new/funnel', label: 'Funnel', icon: Briefcase },
     { path: '/agent-new/commission', label: 'My Commission', icon: DollarSign },
     { path: '/agent-new/referral', label: 'Referral', icon: Sparkles },
-    { divider: true, label: '🌍 Explore' },
+    { path: '/messages', label: 'Messages', icon: MessageSquare },
     { path: '/study-abroad', label: 'Study Abroad', icon: GraduationCap },
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
-    { divider: true, label: '💬 Communication' },
-    { path: '/messages', label: 'Messages', icon: MessageSquare },
   ],
 
   // ==================== BROKER ====================
@@ -77,7 +80,6 @@ const roleNavItems = {
     { path: '/broker-new/leaderboard', label: 'Agent Leaderboard', icon: Award },
     { path: '/broker-new/commission', label: 'Commission', icon: DollarSign },
     { path: '/broker-new/clients', label: 'Clients', icon: Building2 },
-    { divider: true, label: '💬 Communication' },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
   ],
 
@@ -88,27 +90,12 @@ const roleNavItems = {
     { path: '/employer-new/post-job', label: 'Post Job', icon: Briefcase },
     { path: '/employer-new/applicants', label: 'Applicants', icon: Users },
     { path: '/employer-new/contracts', label: 'Contracts', icon: FileText },
-    { divider: true, label: '💬 Communication' },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
   ],
 
   // ==================== ADMIN ====================
   ADMIN: [
     { path: '/admin', label: 'War Room', icon: LayoutDashboard },
-    { path: '/admin/search', label: 'Universal Search', icon: Search },
-    { path: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
-    { path: '/admin/sub-admin', label: 'Create Sub-Admin', icon: Users },
-    { path: '/admin/email', label: 'Email Composer', icon: FileText },
-    { path: '/admin/promotions', label: 'Promotions', icon: FileText },
-    { path: '/admin/ads', label: 'Ads & Banners', icon: FileText },
-    { path: '/my-subscription', label: 'My Subscription', icon: FileText },
-    { path: '/my-payments', label: 'My Payments', icon: FileText },
-    { path: '/pricing', label: 'Pricing Plans', icon: FileText },
-    { path: '/admin/orchestration', label: 'AI Orchestration', icon: Sparkles },
-    { path: '/admin/match/job-seeker', label: 'Match Job Seeker', icon: Target },
-    { path: '/admin/match/student', label: 'Match Student', icon: Users },
-    { path: '/admin/match/company', label: 'Match Company', icon: Building2 },
-    { divider: true, label: '👥 Users' },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/organizations', label: 'Organizations', icon: Building2 },
     { path: '/admin/audit', label: 'Audit Logs', icon: ShieldCheck },
@@ -121,42 +108,68 @@ const roleNavItems = {
     { path: '/admin/students', label: 'Student Command', icon: Users },
     { path: '/admin/agents-brokers', label: 'Agent & Broker', icon: Handshake },
     { path: '/admin/revenue', label: 'Revenue & Reports', icon: TrendingUp },
-    { path: '/admin/payment-settings', label: 'Payment Settings', icon: FileText },
-    { path: '/admin/pending-payments', label: 'Pending Payments', icon: FileText },
     { divider: true, label: '📦 Operations' },
     { path: '/admin/bulk', label: 'Bulk Operations', icon: Package },
-    { divider: true, label: '💬 Communication' },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
+    { path: '/study-abroad', label: 'Study Abroad', icon: GraduationCap },
+    { path: '/work-abroad', label: 'Work Abroad', icon: Briefcase },
+    { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
   ],
 };
 
-export default function Sidebar({ role = 'STUDENT', isOpen, onClose }) {
+export default function Sidebar({ role = 'STUDENT' }) {
   const { user, logout } = useAuth();
   const navItems = roleNavItems[role] || roleNavItems.STUDENT;
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
     <>
-      {/* Mobile overlay — jab sidebar khula ho */}
-      {isOpen && (
+      {/* Mobile hamburger button — mobile only */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="md:hidden fixed top-4 left-4 z-[9999] p-2.5 rounded-xl bg-slate-900 text-white shadow-lg"
+        aria-label="Toggle menu"
+      >
+        {isMobileOpen ? (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile backdrop — tap to close */}
+      {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={onClose}
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
         />
       )}
 
-      <aside className={`
-        fixed md:static inset-y-0 left-0 z-50
-        w-64 bg-slate-900 text-white flex flex-col shadow-2xl
-        transform transition-transform duration-300
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
+      {/* Sidebar */}
+      <aside
+        className={`w-64 bg-slate-900 text-white flex flex-col shadow-2xl
+          fixed md:relative inset-y-0 left-0 z-50
+          transform transition-transform duration-300 ease-in-out
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+      >
         {/* Logo */}
         <div className="p-6 border-b border-slate-700">
-          <div className="flex flex-col gap-1">
-            <img src="/logo-dark.svg" alt="AI Glue" className="h-10 w-auto" />
-            <p className="text-xs text-slate-400">{role}</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">AI Glue</h1>
+              <p className="text-xs text-slate-400">{role}</p>
+            </div>
           </div>
         </div>
+
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item, idx) => {
@@ -175,7 +188,7 @@ export default function Sidebar({ role = 'STUDENT', isOpen, onClose }) {
                 key={item.path}
                 to={item.path}
                 end={item.path.split('/').length === 2}
-                onClick={onClose}
+                onClick={() => setIsMobileOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
                     isActive
