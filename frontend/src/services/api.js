@@ -255,4 +255,5 @@ export const crmAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+  aiVerify: (docId) => api.post(`/agent/documents/${docId}/ai-verify`),
 };

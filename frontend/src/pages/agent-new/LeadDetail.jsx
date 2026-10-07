@@ -52,10 +52,7 @@ export default function LeadDetail() {
   };
 
   const uploadDoc = async () => {
-    if (!selectedFile) {
-      setError('Pehle file choose karo');
-      return;
-    }
+    if (!selectedFile) { setError('Pehle file choose karo'); return; }
     setUploading(true);
     setError('');
     try {
@@ -77,6 +74,34 @@ export default function LeadDetail() {
     load();
   };
 
+  const aiVerify = async (docId) => {
+    setUploading(true);
+    setError('');
+    setSuccess('🤖 AI verify chal raha hai... 15-30 second lag sakte hain');
+    try {
+      const res = await crmAPI.aiVerify(docId);
+      const data = res.data;
+      if (data.status === 'error') {
+        setError(`AI Verify failed: ${data.message}`);
+      } else {
+        const a = data.analysis || {};
+        const verdict = a.verdict || 'REVIEW';
+        const risk = a.risk_score || 0;
+        setSuccess(`🤖 Verdict: ${verdict} | Risk: ${risk}% | ${a.recommendation || ''}`);
+        if (verdict === 'PASS') {
+          await crmAPI.updateDocStatus(docId, 'VERIFIED');
+        } else if (verdict === 'FLAG') {
+          await crmAPI.updateDocStatus(docId, 'REJECTED', 'AI flagged');
+        }
+      }
+      load();
+    } catch (e) {
+      setError('AI Verify failed: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) return <div className="p-6">Loading...</div>;
   if (!lead) return <div className="p-6 text-red-600">{error || 'Not found'}</div>;
 
@@ -95,7 +120,6 @@ export default function LeadDetail() {
       {error && <div className="mt-3"><Alert type="danger" onClose={() => setError('')}>{error}</Alert></div>}
       {success && <div className="mt-3"><Alert type="success" onClose={() => setSuccess('')}>{success}</Alert></div>}
 
-      {/* Stage selector */}
       <div className="mt-6 flex flex-wrap gap-2">
         {STAGES.map(s => (
           <button
@@ -108,7 +132,6 @@ export default function LeadDetail() {
         ))}
       </div>
 
-      {/* Info grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
         <Card title="Country" value={lead.country || '—'} icon="🌍" color="blue" />
         <Card title="Course" value={lead.course || '—'} icon="📚" color="purple" />
@@ -118,11 +141,9 @@ export default function LeadDetail() {
         <Card title="Priority" value={lead.priority || '—'} icon="⚡" color="red" />
       </div>
 
-      {/* Documents */}
       <div className="mt-6 bg-white rounded-lg border p-4">
         <h2 className="font-semibold mb-3">📄 Documents</h2>
 
-        {/* Upload area */}
         <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4 mb-4">
           <div className="flex flex-wrap gap-2 items-center">
             <select
@@ -152,7 +173,6 @@ export default function LeadDetail() {
           )}
         </div>
 
-        {/* Document list */}
         <div className="space-y-2">
           {(lead.documents || []).length === 0 && (
             <p className="text-sm text-gray-500 text-center py-4">
@@ -181,6 +201,7 @@ export default function LeadDetail() {
                     👁 View
                   </a>
                 )}
+                <button onClick={() => aiVerify(d.id)} disabled={uploading} className="text-xs text-purple-600 hover:underline font-semibold">🤖 AI Verify</button>
                 <button onClick={() => updateDocStatus(d.id, 'VERIFIED')} className="text-xs text-green-600 hover:underline">✓ Verify</button>
                 <button onClick={() => updateDocStatus(d.id, 'REJECTED')} className="text-xs text-red-600 hover:underline">✗ Reject</button>
               </div>
@@ -189,7 +210,6 @@ export default function LeadDetail() {
         </div>
       </div>
 
-      {/* Notes */}
       <div className="mt-6 bg-white rounded-lg border p-4">
         <h2 className="font-semibold mb-3">📝 Notes & Activity</h2>
         <div className="flex gap-2 mb-4">

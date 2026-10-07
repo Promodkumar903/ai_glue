@@ -26,3 +26,6 @@ groq
 zai-sdk 
 pypdf 
 python-docx 
+pytesseract
+pillow
+pdf2image

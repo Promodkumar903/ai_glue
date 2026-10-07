@@ -4995,3 +4995,68 @@ async def agent_upload_document(
         "file_url": file_url,
         "filename": file.filename,
     }
+
+
+
+# ============================================================
+# AI DOCUMENT VERIFICATION
+# ============================================================
+@app.post("/agent/documents/{doc_id}/ai-verify", tags=["Agent CRM"])
+def ai_verify_document_endpoint(
+    doc_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    import core.db_compat as sqlite3
+    from engines.ai_verify import ai_verify
+    import os as _os
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    cur.execute("SELECT id, lead_id, document_type, document_name, file_url, status FROM lead_documents WHERE id = ?", (doc_id,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc_id_db, lead_id, doc_type, doc_name, file_url, status = row
+
+    # Get student name from lead
+    cur.execute("SELECT student_name FROM leads WHERE id = ?", (lead_id,))
+    lead_row = cur.fetchone()
+    student_name = lead_row[0] if lead_row else None
+    conn.close()
+
+    if not file_url:
+        raise HTTPException(status_code=400, detail="No file uploaded for this document")
+
+    # Build file path
+    rel = file_url.lstrip('/')
+    file_path = _os.path.join(_os.getcwd(), rel.replace('/', _os.sep))
+
+    if not _os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"File not found on server: {rel}")
+
+    # Run AI verification
+    result = ai_verify.verify_document(file_path, doc_type, student_name)
+
+    # Save result in activities
+    if result.get("status") == "ok":
+        analysis = result.get("analysis", {})
+        verdict = analysis.get("verdict", "REVIEW")
+        risk = analysis.get("risk_score", 0)
+        now = __import__('datetime').datetime.utcnow().isoformat()
+
+        conn = sqlite3.connect('ai_glue.db')
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO lead_activities (id, lead_id, activity_type, description, actor_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            str(__import__('uuid').uuid4()), lead_id, 'AI_VERIFY',
+            f"AI Verify [{doc_type}]: {verdict} (Risk {risk}%)", current_user.id, now
+        ))
+        conn.commit()
+        conn.close()
+
+    return result
