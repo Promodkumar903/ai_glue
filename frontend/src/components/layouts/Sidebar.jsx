@@ -40,6 +40,7 @@ const roleNavItems = {
     { path: '/trust', label: 'Trust Directory', icon: ShieldCheck },
     { divider: true, label: '💬 Communication' },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
+    { path: '/agent/followups', label: 'Follow-ups', icon: MessageSquare },
   ],
 
   // ==================== JOB SEEKER ====================
@@ -75,6 +76,7 @@ const roleNavItems = {
     { divider: true, label: '🎯 Actions' },
     { path: '/agent-new/candidates', label: 'Candidates', icon: Users },
     { path: '/agent/leads', label: 'Leads (CRM)', icon: Users },
+    { path: '/agent/followups', label: 'Follow-ups', icon: Bell },
     { path: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/agent-new/funnel', label: 'Funnel', icon: Briefcase },
     { path: '/agent-new/commission', label: 'My Commission', icon: DollarSign },

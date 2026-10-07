@@ -157,6 +157,46 @@ export default function LeadDetail() {
         <Card title="Priority" value={lead.priority || '—'} icon="⚡" color="red" />
       </div>
 
+      {/* Follow-up */}
+      <div className="mt-6 bg-white rounded-lg border p-4">
+        <h2 className="font-semibold mb-3">📞 Follow-up</h2>
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            defaultValue={lead.next_followup ? lead.next_followup.slice(0, 10) : ''}
+            onChange={async (e) => {
+              const d = e.target.value;
+              try {
+                await crmAPI.setFollowup(id, d);
+                setSuccess(`Follow-up set for ${d}`);
+                load();
+              } catch (err) {
+                setError('Failed to set follow-up');
+              }
+            }}
+            className="border rounded px-3 py-2 text-sm"
+          />
+          {lead.next_followup && (
+            <>
+              <span className="text-sm text-gray-600">
+                Current: <strong>{new Date(lead.next_followup).toLocaleDateString()}</strong>
+              </span>
+              <button
+                onClick={async () => {
+                  await crmAPI.completeFollowup(id, null, '');
+                  setSuccess('Follow-up completed');
+                  load();
+                }}
+                className="text-xs px-3 py-1.5 bg-green-50 text-green-700 rounded hover:bg-green-100 font-medium"
+              >
+                ✅ Mark Complete
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+
       {/* Document Checklist */}
       <div className="mt-6 bg-white rounded-lg border p-4">
         <div className="flex justify-between items-center mb-3">

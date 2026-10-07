@@ -256,6 +256,9 @@ export const crmAPI = {
     });
   },
   aiVerify: (docId) => api.post(`/agent/documents/${docId}/ai-verify`),
+  listFollowups: (filterType = 'today') => api.get(`/agent/followups?filter_type=${filterType}`),
+  setFollowup: (leadId, date) => api.patch(`/agent/leads/${leadId}/followup`, { date }),
+  completeFollowup: (leadId, nextDate, note) => api.post(`/agent/leads/${leadId}/followup/complete`, { next_date: nextDate, note }),
   docCheckerCountries: () => api.get('/agent/document-checker/countries'),
   docCheckerRequirements: (code) => api.get(`/agent/document-checker/requirements/${code}`),
   docCheckLead: (leadId) => api.get(`/agent/leads/${leadId}/document-check`),

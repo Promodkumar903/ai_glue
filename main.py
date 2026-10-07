@@ -5118,3 +5118,161 @@ def doc_checker_for_lead(
     result["lead_id"] = lead_id_db
     result["student_name"] = student_name
     return result
+
+
+
+# ============================================================
+# FOLLOW-UP SYSTEM
+# ============================================================
+@app.get("/agent/followups", tags=["Follow-ups"])
+def get_followups(
+    filter_type: str = "today",
+    current_user: User = Depends(get_current_user),
+):
+    """
+    filter_type: today | overdue | upcoming | all
+    """
+    import core.db_compat as sqlite3
+    from datetime import datetime, timedelta
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    today = datetime.utcnow().date().isoformat()
+    tomorrow = (datetime.utcnow().date() + timedelta(days=1)).isoformat()
+    week_later = (datetime.utcnow().date() + timedelta(days=7)).isoformat()
+
+    base_q = """
+        SELECT id, student_name, email, phone, country, course, stage, priority,
+               next_followup, last_contacted, notes, created_at
+        FROM leads
+        WHERE agent_id = ?
+          AND next_followup IS NOT NULL
+          AND stage NOT IN ('ENROLLED', 'LOST')
+    """
+
+    if filter_type == "today":
+        q = base_q + " AND next_followup LIKE ? ORDER BY next_followup ASC"
+        params = (current_user.id, f"{today}%")
+    elif filter_type == "overdue":
+        q = base_q + " AND next_followup < ? ORDER BY next_followup ASC"
+        params = (current_user.id, today)
+    elif filter_type == "upcoming":
+        q = base_q + " AND next_followup >= ? ORDER BY next_followup ASC LIMIT 50"
+        params = (current_user.id, tomorrow)
+    else:  # all
+        q = base_q + " ORDER BY next_followup ASC LIMIT 100"
+        params = (current_user.id,)
+
+    cur.execute(q, params)
+    rows = cur.fetchall()
+    cols = ['id', 'student_name', 'email', 'phone', 'country', 'course', 'stage',
+            'priority', 'next_followup', 'last_contacted', 'notes', 'created_at']
+
+    followups = [dict(zip(cols, r)) for r in rows]
+    conn.close()
+
+    return {
+        "filter": filter_type,
+        "count": len(followups),
+        "followups": followups,
+    }
+
+
+@app.patch("/agent/leads/{lead_id}/followup", tags=["Follow-ups"])
+def set_followup(
+    lead_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Set next_followup date. Payload: {"date": "2026-10-15"} or {"date": null} to clear
+    """
+    import core.db_compat as sqlite3
+    from datetime import datetime
+
+    new_date = payload.get('date')
+    now = datetime.utcnow().isoformat()
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    # Verify lead belongs to agent
+    cur.execute("SELECT id FROM leads WHERE id = ? AND agent_id = ?", (lead_id, current_user.id))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    cur.execute(
+        "UPDATE leads SET next_followup = ?, updated_at = ? WHERE id = ?",
+        (new_date, now, lead_id)
+    )
+
+    # Log activity
+    if new_date:
+        desc = f"Follow-up set for {new_date}"
+    else:
+        desc = "Follow-up cleared"
+
+    cur.execute("""
+        INSERT INTO lead_activities (id, lead_id, activity_type, description, actor_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (str(__import__('uuid').uuid4()), lead_id, 'FOLLOWUP_SET', desc, current_user.id, now))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "ok", "lead_id": lead_id, "next_followup": new_date}
+
+
+@app.post("/agent/leads/{lead_id}/followup/complete", tags=["Follow-ups"])
+def complete_followup(
+    lead_id: str,
+    payload: dict = _Body(default={}),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Complete current follow-up and optionally set next one.
+    Payload: {"next_date": "2026-10-20", "note": "called, interested"}
+    """
+    import core.db_compat as sqlite3
+    from datetime import datetime, timedelta
+
+    next_date = payload.get('next_date')
+    note = payload.get('note', '')
+    now = datetime.utcnow().isoformat()
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    cur.execute("SELECT id FROM leads WHERE id = ? AND agent_id = ?", (lead_id, current_user.id))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # If no next_date provided, auto-set +7 days
+    if next_date is False:
+        # Explicit skip
+        next_date = None
+    elif next_date is None:
+        # Auto +7 days
+        next_date = (datetime.utcnow().date() + timedelta(days=7)).isoformat()
+
+    cur.execute(
+        "UPDATE leads SET next_followup = ?, last_contacted = ?, updated_at = ? WHERE id = ?",
+        (next_date, now, now, lead_id)
+    )
+
+    desc = f"Follow-up completed. Next: {next_date or 'none'}"
+    if note:
+        desc += f" | {note}"
+
+    cur.execute("""
+        INSERT INTO lead_activities (id, lead_id, activity_type, description, actor_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (str(__import__('uuid').uuid4()), lead_id, 'FOLLOWUP_DONE', desc, current_user.id, now))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "completed", "lead_id": lead_id, "next_followup": next_date}
