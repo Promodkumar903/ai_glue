@@ -4,7 +4,7 @@ import {
   Search, MessageSquare, ShieldCheck, GraduationCap,
   DollarSign, BookOpen, Home, LogOut, Video, Award,
   Handshake, Hotel, Sparkles, Library, Heart,
-  GraduationCap as EduIcon, Store, Target, TrendingUp, Package
+  GraduationCap as EduIcon, Store, Target, TrendingUp, Package, Bell
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 
@@ -76,8 +76,9 @@ const roleNavItems = {
     { divider: true, label: '🎯 Actions' },
     { path: '/agent-new/candidates', label: 'Candidates', icon: Users },
     { path: '/agent/leads', label: 'Leads (CRM)', icon: Users },
-    { path: '/agent/followups', label: 'Follow-ups', icon: Bell },
-    { path: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/agent/followups', label: 'Follow-ups', icon: MessageSquare },
+    { path: '/agent', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/agent/dashboard', label: 'CRM Dashboard', icon: Target },
     { path: '/agent-new/funnel', label: 'Funnel', icon: Briefcase },
     { path: '/agent-new/commission', label: 'My Commission', icon: DollarSign },
     { path: '/agent-new/referral', label: 'Referral', icon: Sparkles },
