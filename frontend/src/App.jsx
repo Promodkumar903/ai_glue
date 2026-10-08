@@ -115,7 +115,7 @@ import SubPage from './pages/SubPage';
 
 // Layout Component
 function Layout() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -137,11 +137,24 @@ function Layout() {
 }
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
     useEffect(() => {
   trackPageView();
   }, [location.pathname]);
+
+  // Wait for auth to load before rendering routes
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2">AI Glue</div>
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   const rolePath = user?.role?.toLowerCase().replace('_', '-') || 'student';
 
   return (

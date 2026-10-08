@@ -5423,14 +5423,49 @@ def _get_user_role(user_id, cur):
         return 'STUDENT'
 
 
+
+
+# ============================================================
+# REGIONS — list
+# ============================================================
+@app.get("/api/visa/regions", tags=["Visa"])
+def get_regions(current_user: User = Depends(get_current_user)):
+    """All regions with countries."""
+    from engines.country_regions import get_all_regions
+    return {"regions": get_all_regions()}
+
+
+# ============================================================
+# UNIFIED VISA VIEW — with filters
+# ============================================================
+def _get_user_role(user_id, cur):
+    try:
+        cur.execute(
+            "SELECT role_code FROM user_roles WHERE user_id = ? AND revoked_at IS NULL LIMIT 1",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        return row[0] if row else 'STUDENT'
+    except Exception:
+        return 'STUDENT'
+
+
 @app.get("/api/visa/cases", tags=["Visa"])
 def get_visa_cases(
     status: str = None,
     country: str = None,
+    region: str = None,
+    search: str = None,
+    sort: str = "recent",
     current_user: User = Depends(get_current_user),
 ):
-    """Unified visa view — auto-filters by role."""
+    """
+    Unified visa view with filters.
+    sort: recent | oldest | days_pending | name
+    """
     import core.db_compat as sqlite3
+    from engines.country_regions import get_countries_by_region, is_valid_region
+    from datetime import datetime
 
     conn = sqlite3.connect('ai_glue.db')
     cur = conn.cursor()
@@ -5441,6 +5476,7 @@ def get_visa_cases(
     base_q = """
         SELECT v.id, v.candidate_id, v.country, v.visa_type, v.status,
                v.applied_at, v.decision_at, v.created_at, v.agent_id,
+               v.trust_level, v.source_tier, v.last_checked_at,
                u.full_name as candidate_name, u.email as candidate_email
         FROM visa_cases v
         LEFT JOIN users u ON u.id = v.candidate_id
@@ -5449,6 +5485,7 @@ def get_visa_cases(
     params = []
     where_clauses = []
 
+    # Role-based filtering
     if role in ('STUDENT', 'JOB_SEEKER'):
         where_clauses.append("v.candidate_id = ?")
         params.append(user_id)
@@ -5457,26 +5494,73 @@ def get_visa_cases(
         params.append(user_id)
     # ADMIN → no filter
 
+    # Status filter
     if status:
         where_clauses.append("v.status = ?")
         params.append(status)
+
+    # Country filter
     if country:
         where_clauses.append("v.country = ?")
         params.append(country)
 
+    # Region filter
+    if region and is_valid_region(region):
+        region_countries = get_countries_by_region(region)
+        if region_countries:
+            placeholders = ",".join("?" * len(region_countries))
+            where_clauses.append(f"v.country IN ({placeholders})")
+            params.extend(region_countries)
+
+    # Search filter
+    if search:
+        where_clauses.append("(u.full_name LIKE ? OR u.email LIKE ? OR v.country LIKE ?)")
+        s = f"%{search}%"
+        params.extend([s, s, s])
+
     if where_clauses:
         base_q += " WHERE " + " AND ".join(where_clauses)
 
-    base_q += " ORDER BY v.created_at DESC LIMIT 500"
+    # Sort
+    if sort == "oldest":
+        base_q += " ORDER BY v.created_at ASC"
+    elif sort == "name":
+        base_q += " ORDER BY u.full_name ASC"
+    else:  # recent
+        base_q += " ORDER BY v.created_at DESC"
+
+    base_q += " LIMIT 500"
 
     cur.execute(base_q, tuple(params))
     rows = cur.fetchall()
     cols = ['id', 'candidate_id', 'country', 'visa_type', 'status',
             'applied_at', 'decision_at', 'created_at', 'agent_id',
+            'trust_level', 'source_tier', 'last_checked_at',
             'candidate_name', 'candidate_email']
-    cases = [dict(zip(cols, r)) for r in rows]
 
-    # Counts — scoped
+    now = datetime.utcnow()
+    cases = []
+    for r in rows:
+        c = dict(zip(cols, r))
+        # Days pending
+        try:
+            created = datetime.fromisoformat(c['created_at']) if c['created_at'] else now
+            c['days_pending'] = (now - created).days
+        except Exception:
+            c['days_pending'] = 0
+        # Alert flag
+        c['alert'] = None
+        if c['status'] in ('DOCS_PENDING',) and c['days_pending'] > 14:
+            c['alert'] = 'OVERDUE'
+        elif c['status'] in ('APPLIED', 'UNDER_REVIEW') and c['days_pending'] > 60:
+            c['alert'] = 'STUCK'
+        cases.append(c)
+
+    # Days_pending sort (after Python-side calc)
+    if sort == "days_pending":
+        cases.sort(key=lambda x: x.get('days_pending', 0), reverse=True)
+
+    # Counts (role-scoped)
     count_q = "SELECT status, COUNT(*) FROM visa_cases"
     count_where = []
     count_params = []
@@ -5486,15 +5570,13 @@ def get_visa_cases(
     elif role == 'AGENT':
         count_where.append("agent_id = ?")
         count_params.append(user_id)
-
     if count_where:
         count_q += " WHERE " + " AND ".join(count_where)
     count_q += " GROUP BY status"
-
     cur.execute(count_q, tuple(count_params))
     counts = {row[0]: row[1] for row in cur.fetchall()}
 
-    # Upcoming appointments — scoped
+    # Upcoming appointments
     appt_q = """
         SELECT a.id, a.visa_case_id, a.scheduled_at, a.location, a.status,
                v.candidate_id, v.country, u.full_name as candidate_name
@@ -5510,7 +5592,6 @@ def get_visa_cases(
     elif role == 'AGENT':
         appt_q += " AND v.agent_id = ?"
         appt_params.append(user_id)
-
     appt_q += " ORDER BY a.scheduled_at ASC LIMIT 20"
 
     cur.execute(appt_q, tuple(appt_params))
@@ -5748,3 +5829,4 @@ def visa_send_sms(
         "sms_sent_at": now,
         "note": "SMS provider integration pending — text ready to send via Twilio/other",
     }
+
