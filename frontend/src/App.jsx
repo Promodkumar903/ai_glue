@@ -23,6 +23,7 @@ import AgentCandidates from './pages/agent-new/Candidates';
 import Leads from './pages/agent-new/Leads';
 import AgentCRMDashboard from './pages/agent-new/AgentDashboard';
 import Followups from './pages/agent-new/Followups';
+import Grades from './pages/agent-new/Grades';
 import LeadDetail from './pages/agent-new/LeadDetail';
 import AgentFunnel from './pages/agent-new/Funnel';
 import AgentCommission from './pages/agent-new/Commission';
@@ -231,6 +232,7 @@ function App() {
         <Route path="/agent/leads" element={<Leads />} />
         <Route path="/agent/dashboard" element={<AgentCRMDashboard />} />
         <Route path="/agent/followups" element={<Followups />} />
+        <Route path="/agent/grades" element={<Grades />} />
         <Route path="/agent/leads/:id" element={<LeadDetail />} />
         <Route path="/agent-new/funnel" element={<AgentFunnel />} />
         <Route path="/agent-new/commission" element={<AgentCommission />} />

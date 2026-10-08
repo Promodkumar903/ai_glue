@@ -5276,3 +5276,32 @@ def complete_followup(
     conn.close()
 
     return {"status": "completed", "lead_id": lead_id, "next_followup": next_date}
+
+
+
+# ============================================================
+# AGENT GRADES
+# ============================================================
+@app.get("/agent/grades/me", tags=["Agent Grades"])
+def my_grade(
+    current_user: User = Depends(get_current_user),
+):
+    from engines.grade import grade_engine
+    return grade_engine.get_grade(current_user.id)
+
+
+@app.post("/agent/grades/me/recalculate", tags=["Agent Grades"])
+def recalculate_my_grade(
+    current_user: User = Depends(get_current_user),
+):
+    from engines.grade import grade_engine
+    return grade_engine.calculate_for_agent(current_user.id)
+
+
+@app.get("/agent/grades/leaderboard", tags=["Agent Grades"])
+def grades_leaderboard(
+    limit: int = 20,
+    current_user: User = Depends(get_current_user),
+):
+    from engines.grade import grade_engine
+    return {"leaderboard": grade_engine.leaderboard(limit=limit)}

@@ -81,6 +81,7 @@ const roleNavItems = {
     { path: '/agent/dashboard', label: 'CRM Dashboard', icon: Target },
     { path: '/agent-new/funnel', label: 'Funnel', icon: Briefcase },
     { path: '/agent-new/commission', label: 'My Commission', icon: DollarSign },
+    { path: '/agent/grades', label: 'My Grade', icon: Award },
     { path: '/agent-new/referral', label: 'Referral', icon: Sparkles },
     { divider: true, label: '🌍 Explore' },
     { path: '/study-abroad', label: 'Study Abroad', icon: GraduationCap },
