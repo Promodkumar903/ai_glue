@@ -266,6 +266,8 @@ export const crmAPI = {
   listApplications: (params = {}) => api.get('/agent/applications', { params }),
   visaCases: (params = {}) => api.get('/agent/visa/cases', { params }),
   getVisaCases: (params = {}) => api.get('/visa/cases', { params }),
+  visaAutoCheck: (id, refNumber = '') => api.post(`/agent/visa/${id}/auto-check`, { ref_number: refNumber }),
+  visaSendSMS: (id, reason = '', agentName = '') => api.post(`/agent/visa/${id}/send-sms`, { reason, agent_name: agentName }),
   visaDetail: (id) => api.get(`/agent/visa/${id}`),
   createVisa: (data) => api.post('/agent/visa/create', data),
   updateVisaStatus: (id, status) => api.put(`/agent/visa/${id}/status`, { status }),

@@ -5643,3 +5643,108 @@ def agent_add_appointment(
         raise HTTPException(status_code=400, detail="scheduled_at required")
 
     return visa_engine.create_appointment(visa_id, scheduled_at, location)
+
+
+
+# ============================================================
+# VISA TIER SYSTEM — Auto check + SMS
+# ============================================================
+@app.post("/agent/visa/{visa_id}/auto-check", tags=["Visa"])
+def visa_auto_check(
+    visa_id: str,
+    payload: dict = _Body(default={}),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Auto-check visa status via tier system.
+    Payload: {ref_number: "case-id"}
+    """
+    import core.db_compat as sqlite3
+    from engines.visa_tier import visa_tier
+    from datetime import datetime
+
+    ref_number = payload.get('ref_number', '')
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    cur.execute("SELECT country, visa_type, candidate_id FROM visa_cases WHERE id = ?", (visa_id,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Visa case not found")
+
+    country, visa_type, candidate_id = row
+
+    # Run auto-check
+    result = visa_tier.auto_check(country, ref_number)
+    result["visa_id"] = visa_id
+    result["country"] = country
+
+    # Log the check
+    now = datetime.utcnow().isoformat()
+    cur.execute(
+        "UPDATE visa_cases SET last_checked_at = ?, source_tier = ? WHERE id = ?",
+        (now, f"TIER{result.get('tier', 3)}", visa_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return result
+
+
+@app.post("/agent/visa/{visa_id}/send-sms", tags=["Visa"])
+def visa_send_sms(
+    visa_id: str,
+    payload: dict = _Body(default={}),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate SMS message for candidate.
+    Payload: {reason: "...", agent_name: "Rahul"}
+    """
+    import core.db_compat as sqlite3
+    from engines.visa_tier import visa_tier
+    from datetime import datetime
+
+    reason = payload.get('reason', '')
+    agent_name = payload.get('agent_name', current_user.full_name or 'your agent')
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT v.country, v.visa_type, v.status, v.candidate_id,
+               u.full_name, u.phone, u.email
+        FROM visa_cases v
+        LEFT JOIN users u ON u.id = v.candidate_id
+        WHERE v.id = ?
+    """, (visa_id,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Visa case not found")
+
+    country, visa_type, status, candidate_id, candidate_name, candidate_phone, candidate_email = row
+
+    # Generate SMS
+    sms_text = visa_tier.generate_sms(country, status, agent_name, reason)
+
+    # Mark SMS sent
+    now = datetime.utcnow().isoformat()
+    cur.execute("UPDATE visa_cases SET sms_sent_at = ? WHERE id = ?", (now, visa_id))
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "sms_generated",
+        "visa_id": visa_id,
+        "to": {
+            "name": candidate_name,
+            "phone": candidate_phone,
+            "email": candidate_email,
+        },
+        "sms_text": sms_text,
+        "sms_sent_at": now,
+        "note": "SMS provider integration pending — text ready to send via Twilio/other",
+    }
