@@ -24,6 +24,8 @@ import Leads from './pages/agent-new/Leads';
 import AgentCRMDashboard from './pages/agent-new/AgentDashboard';
 import Followups from './pages/agent-new/Followups';
 import Applications from './pages/agent-new/Applications';
+import Visa from './pages/agent-new/Visa';
+import VisaDetail from './pages/agent-new/VisaDetail';
 import Grades from './pages/agent-new/Grades';
 import LeadDetail from './pages/agent-new/LeadDetail';
 import AgentFunnel from './pages/agent-new/Funnel';
@@ -235,6 +237,11 @@ function App() {
         <Route path="/agent/followups" element={<Followups />} />
         <Route path="/agent/grades" element={<Grades />} />
         <Route path="/agent/applications" element={<Applications />} />
+        <Route path="/agent/visa" element={<Visa />} />
+        <Route path="/student/visa-cases" element={<Visa />} />
+        <Route path="/jobseeker-new/visa-cases" element={<Visa />} />
+        <Route path="/admin/visa" element={<Visa />} />
+        <Route path="/agent/visa/:id" element={<VisaDetail />} />
         <Route path="/agent/leads/:id" element={<LeadDetail />} />
         <Route path="/agent-new/funnel" element={<AgentFunnel />} />
         <Route path="/agent-new/commission" element={<AgentCommission />} />

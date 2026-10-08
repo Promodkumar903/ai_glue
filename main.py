@@ -5399,3 +5399,247 @@ def agent_application_detail(
     if isinstance(result, dict):
         result["timeline"] = timeline
     return result
+
+
+
+
+
+# ============================================================
+# UNIFIED VISA VIEW — Role-Aware
+# STUDENT/JOB_SEEKER → own visa
+# AGENT → their candidates' visa
+# ADMIN → all visa cases
+# ============================================================
+def _get_user_role(user_id, cur):
+    """Fetch role from user_roles table."""
+    try:
+        cur.execute(
+            "SELECT role_code FROM user_roles WHERE user_id = ? AND revoked_at IS NULL LIMIT 1",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        return row[0] if row else 'STUDENT'
+    except Exception:
+        return 'STUDENT'
+
+
+@app.get("/visa/cases", tags=["Visa"])
+def get_visa_cases(
+    status: str = None,
+    country: str = None,
+    current_user: User = Depends(get_current_user),
+):
+    """Unified visa view — auto-filters by role."""
+    import core.db_compat as sqlite3
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    user_id = current_user.id
+    role = _get_user_role(user_id, cur)
+
+    base_q = """
+        SELECT v.id, v.candidate_id, v.country, v.visa_type, v.status,
+               v.applied_at, v.decision_at, v.created_at, v.agent_id,
+               u.full_name as candidate_name, u.email as candidate_email
+        FROM visa_cases v
+        LEFT JOIN users u ON u.id = v.candidate_id
+    """
+
+    params = []
+    where_clauses = []
+
+    if role in ('STUDENT', 'JOB_SEEKER'):
+        where_clauses.append("v.candidate_id = ?")
+        params.append(user_id)
+    elif role == 'AGENT':
+        where_clauses.append("v.agent_id = ?")
+        params.append(user_id)
+    # ADMIN → no filter
+
+    if status:
+        where_clauses.append("v.status = ?")
+        params.append(status)
+    if country:
+        where_clauses.append("v.country = ?")
+        params.append(country)
+
+    if where_clauses:
+        base_q += " WHERE " + " AND ".join(where_clauses)
+
+    base_q += " ORDER BY v.created_at DESC LIMIT 500"
+
+    cur.execute(base_q, tuple(params))
+    rows = cur.fetchall()
+    cols = ['id', 'candidate_id', 'country', 'visa_type', 'status',
+            'applied_at', 'decision_at', 'created_at', 'agent_id',
+            'candidate_name', 'candidate_email']
+    cases = [dict(zip(cols, r)) for r in rows]
+
+    # Counts — scoped
+    count_q = "SELECT status, COUNT(*) FROM visa_cases"
+    count_where = []
+    count_params = []
+    if role in ('STUDENT', 'JOB_SEEKER'):
+        count_where.append("candidate_id = ?")
+        count_params.append(user_id)
+    elif role == 'AGENT':
+        count_where.append("agent_id = ?")
+        count_params.append(user_id)
+
+    if count_where:
+        count_q += " WHERE " + " AND ".join(count_where)
+    count_q += " GROUP BY status"
+
+    cur.execute(count_q, tuple(count_params))
+    counts = {row[0]: row[1] for row in cur.fetchall()}
+
+    # Upcoming appointments — scoped
+    appt_q = """
+        SELECT a.id, a.visa_case_id, a.scheduled_at, a.location, a.status,
+               v.candidate_id, v.country, u.full_name as candidate_name
+        FROM visa_appointments a
+        LEFT JOIN visa_cases v ON v.id = a.visa_case_id
+        LEFT JOIN users u ON u.id = v.candidate_id
+        WHERE a.status = 'SCHEDULED'
+    """
+    appt_params = []
+    if role in ('STUDENT', 'JOB_SEEKER'):
+        appt_q += " AND v.candidate_id = ?"
+        appt_params.append(user_id)
+    elif role == 'AGENT':
+        appt_q += " AND v.agent_id = ?"
+        appt_params.append(user_id)
+
+    appt_q += " ORDER BY a.scheduled_at ASC LIMIT 20"
+
+    cur.execute(appt_q, tuple(appt_params))
+    appt_rows = cur.fetchall()
+    appt_cols = ['id', 'visa_case_id', 'scheduled_at', 'location', 'status',
+                 'candidate_id', 'country', 'candidate_name']
+    appointments = [dict(zip(appt_cols, r)) for r in appt_rows]
+
+    conn.close()
+
+    return {
+        "role": role,
+        "cases": cases,
+        "total": len(cases),
+        "counts_by_status": counts,
+        "upcoming_appointments": appointments,
+    }
+
+@app.get("/agent/visa/{visa_id}", tags=["Visa"])
+def agent_visa_detail(
+    visa_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Full visa case detail with appointments and checklist."""
+    from engines.visa import visa_engine
+    import core.db_compat as sqlite3
+
+    # Get case
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT v.id, v.candidate_id, v.country, v.visa_type, v.status,
+               v.applied_at, v.decision_at, v.created_at, v.updated_at,
+               u.full_name as candidate_name, u.email as candidate_email,
+               u.phone as candidate_phone
+        FROM visa_cases v
+        LEFT JOIN users u ON u.id = v.candidate_id
+        WHERE v.id = ?
+    """, (visa_id,))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Visa case not found")
+
+    cols = ['id', 'candidate_id', 'country', 'visa_type', 'status',
+            'applied_at', 'decision_at', 'created_at', 'updated_at',
+            'candidate_name', 'candidate_email', 'candidate_phone']
+    visa = dict(zip(cols, row))
+
+    # Appointments
+    cur.execute("""
+        SELECT id, scheduled_at, location, status
+        FROM visa_appointments
+        WHERE visa_case_id = ?
+        ORDER BY scheduled_at DESC
+    """, (visa_id,))
+    appt_rows = cur.fetchall()
+    visa['appointments'] = [
+        {"id": r[0], "scheduled_at": r[1], "location": r[2], "status": r[3]}
+        for r in appt_rows
+    ]
+    conn.close()
+
+    # Checklist
+    try:
+        checklist = visa_engine.get_document_checklist(visa['country'], visa['visa_type'])
+        visa['checklist'] = checklist
+    except Exception as e:
+        visa['checklist'] = {"error": str(e)}
+
+    return visa
+
+
+@app.post("/agent/visa/create", tags=["Visa"])
+def agent_create_visa(
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Create new visa case. Payload: {candidate_id, country, visa_type, application_id?}"""
+    from engines.visa import visa_engine
+
+    candidate_id = payload.get('candidate_id')
+    country = payload.get('country')
+    visa_type = payload.get('visa_type')
+    application_id = payload.get('application_id')
+
+    if not candidate_id or not country or not visa_type:
+        raise HTTPException(status_code=400, detail="candidate_id, country, visa_type required")
+
+        # Determine agent_id based on who created this
+    user_id = current_user.id
+    role = _get_user_role(user_id, cur)
+    agent_id = user_id if role == 'AGENT' else None
+
+    return visa_engine.create_visa_case(
+        candidate_id, country, visa_type,
+        application_id=application_id,
+        agent_id=agent_id
+    )
+@app.put("/agent/visa/{visa_id}/status", tags=["Visa"])
+def agent_update_visa_status(
+    visa_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Update visa status. Payload: {status}"""
+    from engines.visa import visa_engine
+
+    new_status = payload.get('status')
+    if not new_status:
+        raise HTTPException(status_code=400, detail="status required")
+
+    return visa_engine.update_visa_status(visa_id, new_status)
+
+
+@app.post("/agent/visa/{visa_id}/appointment", tags=["Visa"])
+def agent_add_appointment(
+    visa_id: str,
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Book appointment. Payload: {scheduled_at, location}"""
+    from engines.visa import visa_engine
+
+    scheduled_at = payload.get('scheduled_at')
+    location = payload.get('location', '')
+
+    if not scheduled_at:
+        raise HTTPException(status_code=400, detail="scheduled_at required")
+
+    return visa_engine.create_appointment(visa_id, scheduled_at, location)

@@ -337,6 +337,7 @@ class VisaCase(Base):
     decision_at = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, default=now_utc)
     updated_at = Column(TIMESTAMP, default=now_utc, onupdate=now_utc)
+    agent_id = Column(String(36), ForeignKey('users.id'), nullable=True)
 
 
 # ---------- 19. VISA_APPOINTMENT ----------

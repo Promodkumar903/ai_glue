@@ -11,40 +11,58 @@ from core.audit import log_audit
 class VisaEngine:
 
     @staticmethod
-    def create_visa_case(user_id: str, country: str, visa_type: str, application_id: str = None, session: Session = None):
+    def create_visa_case(user_id: str, country: str, visa_type: str, application_id: str = None, agent_id: str = None, session: Session = None):
         """Create a new visa case (status: NOT_STARTED)"""
         if session is None:
             session = db.get_session()
-        
+
         user = session.query(User).filter(User.id == user_id).first()
         if not user:
             return {"error": "User not found"}
-        
-        visa_case = VisaCase(
-            candidate_id=user_id,
-            country=country,
-            visa_type=visa_type,
-            status="NOT_STARTED"
-        )
+
+        # Build kwargs dynamically — only pass agent_id if column exists
+        case_kwargs = {
+            "candidate_id": user_id,
+            "country": country,
+            "visa_type": visa_type,
+            "status": "NOT_STARTED",
+        }
+
+        # Try to set agent_id if provided AND column exists in model
+        if agent_id is not None:
+            try:
+                case_kwargs["agent_id"] = agent_id
+                visa_case = VisaCase(**case_kwargs)
+            except TypeError:
+                # agent_id column not in model yet — fallback
+                case_kwargs.pop("agent_id", None)
+                visa_case = VisaCase(**case_kwargs)
+        else:
+            # Try without agent_id first
+            try:
+                visa_case = VisaCase(**case_kwargs)
+            except TypeError:
+                visa_case = VisaCase(candidate_id=user_id, country=country, visa_type=visa_type, status="NOT_STARTED")
+
         session.add(visa_case)
         session.commit()
         session.refresh(visa_case)
-        
+
         log_audit(
             actor_id=user_id,
             action="VISA_CASE_CREATE",
             target_type="VISA_CASE",
             target_id=str(visa_case.id),
-            after={"status": "NOT_STARTED", "country": country, "visa_type": visa_type},
+            after={"status": "NOT_STARTED", "country": country, "visa_type": visa_type, "agent_id": agent_id},
             reason="Visa case created"
         )
-        
+
         return {
             "visa_case_id": str(visa_case.id),
             "status": visa_case.status,
+            "agent_id": agent_id,
             "message": "Visa case created successfully"
         }
-
     @staticmethod
     def update_visa_status(visa_case_id: str, new_status: str, session: Session = None):
         """Update visa case status"""
