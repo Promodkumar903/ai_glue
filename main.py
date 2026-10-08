@@ -5423,7 +5423,7 @@ def _get_user_role(user_id, cur):
         return 'STUDENT'
 
 
-@app.get("/visa/cases", tags=["Visa"])
+@app.get("/api/visa/cases", tags=["Visa"])
 def get_visa_cases(
     status: str = None,
     country: str = None,
