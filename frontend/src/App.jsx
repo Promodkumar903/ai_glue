@@ -90,6 +90,7 @@ import MySubscription from './pages/MySubscription';
 import AdminRevenue from './pages/admin-new/AdminRevenue';
 import AdminPaymentSettings from './pages/admin-new/AdminPaymentSettings';
 import AdminPendingPayments from './pages/admin-new/AdminPendingPayments';
+import AICopilot from './components/AICopilot';
 // Layout
 import Sidebar from './components/layouts/Sidebar';
 import Header from './components/layouts/Header';
@@ -130,6 +131,7 @@ function Layout() {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <Outlet />
+          <AICopilot />
         </main>
       </div>
     </div>

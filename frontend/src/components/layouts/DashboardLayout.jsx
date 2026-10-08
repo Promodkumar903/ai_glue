@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '../../lib/auth-context';
+import AICopilot from '../AICopilot';
 
 export default function DashboardLayout() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <Outlet />
         </main>
+        <AICopilot />
       </div>
     </div>
   );

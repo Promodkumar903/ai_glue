@@ -23,6 +23,7 @@ from auth.auth import register_user, login_user, refresh_access_token, logout_us
 from auth.session import verify_token
 from fastapi import Request
 from core.database import User
+from engines.daily_report import start_daily_report_scheduler, run_daily_report
 from education import router as education_router
 from student_life import router as student_life_router
 from documents import router as documents_router
@@ -95,7 +96,13 @@ zai_client = ZaiClient(api_key=ZAI_API_KEY) if (ZAI_API_KEY and ZaiClient) else 
 
 # ========== APP INSTANCE ==========
 app = FastAPI(title="AI Glue API", version="1.0")
+@app.on_event("startup")
+def _start_daily_report_scheduler():
+    start_daily_report_scheduler()
 
+@app.post("/admin/daily-report/test", tags=["Admin"])
+def _test_daily_report():
+    return run_daily_report()
 
 # ========== SESSION DEPENDENCY ==========
 def get_session():
@@ -5616,7 +5623,7 @@ def agent_visa_detail(
     current_user: User = Depends(get_current_user),
 ):
     """Full visa case detail with appointments and checklist."""
-    from engines.visa import visa_engine
+    from engines.visa import visa
     import core.db_compat as sqlite3
 
     # Get case
@@ -5658,7 +5665,7 @@ def agent_visa_detail(
 
     # Checklist
     try:
-        checklist = visa_engine.get_document_checklist(visa['country'], visa['visa_type'])
+        checklist = visa.get_document_checklist(visa['country'], visa['visa_type'])
         visa['checklist'] = checklist
     except Exception as e:
         visa['checklist'] = {"error": str(e)}
@@ -5671,8 +5678,8 @@ def agent_create_visa(
     payload: dict = _Body(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Create new visa case. Payload: {candidate_id, country, visa_type, application_id?}"""
-    from engines.visa import visa_engine
+    """Create new visa case."""
+    from engines.visa import visa
 
     candidate_id = payload.get('candidate_id')
     country = payload.get('country')
@@ -5682,16 +5689,20 @@ def agent_create_visa(
     if not candidate_id or not country or not visa_type:
         raise HTTPException(status_code=400, detail="candidate_id, country, visa_type required")
 
-        # Determine agent_id based on who created this
-    user_id = current_user.id
-    role = _get_user_role(user_id, cur)
-    agent_id = user_id if role == 'AGENT' else None
+    # Detect if creator is an agent
+    import core.db_compat as _sqlite3
+    _conn = _sqlite3.connect('ai_glue.db')
+    _cur = _conn.cursor()
+    _role = _get_user_role(current_user.id, _cur)
+    _conn.close()
+    _agent_id = current_user.id if _role == 'AGENT' else None
 
-    return visa_engine.create_visa_case(
+    return visa.create_visa_case(
         candidate_id, country, visa_type,
         application_id=application_id,
-        agent_id=agent_id
+        agent_id=_agent_id
     )
+
 @app.put("/agent/visa/{visa_id}/status", tags=["Visa"])
 def agent_update_visa_status(
     visa_id: str,
@@ -5699,13 +5710,13 @@ def agent_update_visa_status(
     current_user: User = Depends(get_current_user),
 ):
     """Update visa status. Payload: {status}"""
-    from engines.visa import visa_engine
+    from engines.visa import visa
 
     new_status = payload.get('status')
     if not new_status:
         raise HTTPException(status_code=400, detail="status required")
 
-    return visa_engine.update_visa_status(visa_id, new_status)
+    return visa.update_visa_status(visa_id, new_status)
 
 
 @app.post("/agent/visa/{visa_id}/appointment", tags=["Visa"])
@@ -5715,7 +5726,7 @@ def agent_add_appointment(
     current_user: User = Depends(get_current_user),
 ):
     """Book appointment. Payload: {scheduled_at, location}"""
-    from engines.visa import visa_engine
+    from engines.visa import visa
 
     scheduled_at = payload.get('scheduled_at')
     location = payload.get('location', '')
@@ -5723,7 +5734,7 @@ def agent_add_appointment(
     if not scheduled_at:
         raise HTTPException(status_code=400, detail="scheduled_at required")
 
-    return visa_engine.create_appointment(visa_id, scheduled_at, location)
+    return visa.create_appointment(visa_id, scheduled_at, location)
 
 
 
@@ -5830,3 +5841,19 @@ def visa_send_sms(
         "note": "SMS provider integration pending — text ready to send via Twilio/other",
     }
 
+# ============================================================
+# AI GLUE COPILOT — Tool Calling Version
+# ============================================================
+@app.post("/agent/copilot/ask", tags=["Agent CRM"])
+async def agent_copilot_ask(
+    payload: dict = _Body(...),
+    current_user: User = Depends(get_current_user),
+):
+    """AI Glue Copilot — answers using real CRM data via tool calling."""
+    from engines.ai_copilot import ask_copilot
+
+    query = payload.get("query")
+    if not query:
+        raise HTTPException(status_code=400, detail="Query is required")
+
+    return ask_copilot(query, current_user.id)
