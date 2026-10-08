@@ -263,6 +263,8 @@ export const crmAPI = {
   docCheckerRequirements: (code) => api.get(`/agent/document-checker/requirements/${code}`),
   docCheckLead: (leadId) => api.get(`/agent/leads/${leadId}/document-check`),
   myGrade: () => api.get('/agent/grades/me'),
+  listApplications: (params = {}) => api.get('/agent/applications', { params }),
+  applicationDetail: (id) => api.get(`/agent/applications/${id}`),
   recalculateGrade: () => api.post('/agent/grades/me/recalculate'),
   gradesLeaderboard: (limit = 20) => api.get(`/agent/grades/leaderboard?limit=${limit}`),
 };

@@ -5305,3 +5305,97 @@ def grades_leaderboard(
 ):
     from engines.grade import grade_engine
     return {"leaderboard": grade_engine.leaderboard(limit=limit)}
+
+
+
+# ============================================================
+# AGENT APPLICATIONS LIST
+# ============================================================
+@app.get("/agent/applications", tags=["Agent Applications"])
+def agent_list_applications(
+    status: str = None,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    List all applications for this agent.
+    Reuses existing 'applications' + 'opportunities' + 'users' tables.
+    """
+    import core.db_compat as sqlite3
+
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+
+    q = """
+        SELECT a.id, a.status, a.candidate_id, a.opportunity_id, a.submitted_at,
+               a.match_score, a.created_at, a.updated_at,
+               u.full_name as candidate_name, u.email as candidate_email,
+               o.title as opportunity_title, o.type as opportunity_type
+        FROM applications a
+        LEFT JOIN users u ON u.id = a.candidate_id
+        LEFT JOIN opportunities o ON o.id = a.opportunity_id
+    """
+    params = []
+
+    # Filter by status if provided
+    if status:
+        q += " WHERE a.status = ?"
+        params.append(status)
+
+    q += " ORDER BY a.created_at DESC LIMIT ?"
+    params.append(limit)
+
+    cur.execute(q, tuple(params))
+    rows = cur.fetchall()
+    cols = ['id', 'status', 'candidate_id', 'opportunity_id', 'submitted_at',
+            'match_score', 'created_at', 'updated_at',
+            'candidate_name', 'candidate_email',
+            'opportunity_title', 'opportunity_type']
+
+    apps = [dict(zip(cols, r)) for r in rows]
+
+    # Status counts
+    cur.execute("SELECT status, COUNT(*) FROM applications GROUP BY status")
+    counts = {row[0]: row[1] for row in cur.fetchall()}
+
+    conn.close()
+
+    return {
+        "applications": apps,
+        "total": len(apps),
+        "counts_by_status": counts,
+    }
+
+
+@app.get("/agent/applications/{application_id}", tags=["Agent Applications"])
+def agent_application_detail(
+    application_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Full application detail with timeline."""
+    from engines.application import app_engine
+    import core.db_compat as sqlite3
+
+    result = app_engine.get_application_status(application_id)
+
+    # Also fetch timeline
+    conn = sqlite3.connect('ai_glue.db')
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT from_state, to_state, actor_id, reason, timestamp
+        FROM application_timeline
+        WHERE application_id = ?
+        ORDER BY timestamp DESC
+        LIMIT 50
+    """, (application_id,))
+    rows = cur.fetchall()
+    timeline = [
+        {"from_state": r[0], "to_state": r[1], "actor_id": r[2],
+         "reason": r[3], "timestamp": r[4]}
+        for r in rows
+    ]
+    conn.close()
+
+    if isinstance(result, dict):
+        result["timeline"] = timeline
+    return result
