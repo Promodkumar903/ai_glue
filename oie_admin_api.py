@@ -91,7 +91,7 @@ def job_contact_log(company: str = "", limit: int = 100):
     cur.execute(q, params)
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
-    return {"count": len(rows), "log": rows}
+    return {"count": len(rows), "contacts": rows}
 
 
 @router.get("/job-detail/{job_id}")
@@ -220,12 +220,46 @@ def study_contact_log(limit: int = 100):
     cur.execute("SELECT * FROM study_contacts ORDER BY created_at DESC LIMIT ?", (limit,))
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
-    return {"count": len(rows), "log": rows}
+    return {"count": len(rows), "contacts": rows}
 
 
 # ============================================================
 # STATS — Separate for Jobs and Studies
 # ============================================================
+@router.get("/study-agents")
+def list_study_agents(limit: int = 100):
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, name, legal_name, country, city, website, email, phone,
+               license_number, license_authority, established_year,
+               services_offered, target_countries, specializations,
+               trust_score, verification_status, fake_flags
+        FROM study_agents
+        ORDER BY trust_score DESC LIMIT ?
+    """, (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return {"count": len(rows), "agents": rows}
+
+
+@router.get("/study-contacts")
+def list_study_contacts(limit: int = 100):
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, university_name, country, website, admissions_officer,
+               designation, email, phone, application_url, verification_status
+        FROM study_contacts
+        ORDER BY country, university_name LIMIT ?
+    """, (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return {"count": len(rows), "contacts": rows}
+
+
 @router.get("/stats/jobs")
 def stats_jobs():
     conn = sqlite3.connect(DB)

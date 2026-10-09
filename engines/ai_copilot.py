@@ -5,6 +5,8 @@ import os
 import json
 import core.db_compat as sqlite3
 from groq import Groq
+from engines.oie_tools import OIE_TOOLS, execute_oie_tool
+
 
 
 TOOLS = [
@@ -287,7 +289,7 @@ def ask_copilot(query, agent_id):
 
     client = Groq(api_key=api_key)
 
-    system_prompt = """You are AI Glue Copilot — an assistant for study-abroad education agents.
+    system_prompt = """You are AI Glue Copilot — assistant for study-abroad agents, students, and job seekers.
 
 Rules:
 1. Use tools to fetch REAL data. Never make up information.
@@ -310,10 +312,10 @@ Rules:
 
     for _ in range(5):
         try:
-            response = client.chat.completions.create(
+           response = client.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=messages,
-                tools=TOOLS,
+                tools=TOOLS + OIE_TOOLS,
                 tool_choice="auto",
                 temperature=0.2,
                 max_tokens=800,
@@ -334,7 +336,12 @@ Rules:
             except Exception:
                 args = {}
 
-            tool_result = _execute_tool(tool_name, args, agent_id)
+            # Try OIE tools first, then fallback to old
+            oie_tool_names = [t["function"]["name"] for t in OIE_TOOLS]
+            if tool_name in oie_tool_names:
+                tool_result = execute_oie_tool(tool_name, args)
+            else:
+                tool_result = _execute_tool(tool_name, args, agent_id)
             tools_used.append({"tool": tool_name, "args": args})
 
             messages.append({
