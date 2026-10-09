@@ -176,10 +176,10 @@ export default function Landing() {
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-slate-950/80 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold">AI Glue <span className="text-purple-400">OIE</span></span>
+            <img src="/logo-dark.svg" alt="AI Glue" className="h-10 w-auto" />
+            <span className="text-xl font-bold">
+              AI Glue <span className="text-purple-400">OIE</span>
+            </span>
             <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">v8.1</span>
           </div>
           <button
