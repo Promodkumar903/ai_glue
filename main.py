@@ -187,6 +187,11 @@ def get_session():
 # ROUTERS (Core Features ??? Routers ????????? Shift)
 # ============================================================
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+from oie_public_api import router as oie_public_router
+app.include_router(oie_public_router)
+from oie_admin_api import router as oie_admin_router
+app.include_router(oie_admin_router)
+app.include_router(oie_admin_router)
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
 app.include_router(offers_router, prefix="/offers", tags=["Offers"])

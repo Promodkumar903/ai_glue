@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './lib/auth-context';
+import Landing from './pages/Landing';
 import Search from './pages/Search';
 import StudentJobs from './pages/student/Jobs';
 import StudentHousing from './pages/student/Housing';
@@ -21,6 +22,8 @@ import VerifyDocument from './pages/student-new/VerifyDocument';
 import ResumeConverter from './pages/student-new/ResumeConverter';
 import AgentCandidates from './pages/agent-new/Candidates';
 import Leads from './pages/agent-new/Leads';
+import OIEJobs from './pages/admin-new/OIEJobs';
+import OIEStudies from './pages/admin-new/OIEStudies';
 import AgentCRMDashboard from './pages/agent-new/AgentDashboard';
 import Followups from './pages/agent-new/Followups';
 import Applications from './pages/agent-new/Applications';
@@ -161,6 +164,7 @@ function App() {
 
   return (
     <Routes>
+    <Route path="/" element={<Landing />} />
       {/* Public */}
       <Route path="/login" element={user ? <Navigate to={`/${rolePath}`} /> : <Login />} />
       <Route path="/about" element={<AboutUs />} />
@@ -181,6 +185,9 @@ function App() {
         <Route path="/employer" element={<EmployerDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/search" element={<AdminSearch />} />
+        <Route path="/admin/oie/jobs" element={<OIEJobs />} />
+        <Route path="/admin/oie/studies" element={<OIEStudies />} />
+        <Route path="/admin/oie" element={<OIEJobs />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/sub-admin" element={<SubAdminCreate />} />
         <Route path="/admin/orchestration" element={<Orchestration />} />

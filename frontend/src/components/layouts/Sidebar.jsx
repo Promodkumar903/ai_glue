@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Building2, Briefcase, FileText,
   Search, MessageSquare, ShieldCheck, GraduationCap,
   DollarSign, BookOpen, Home, LogOut, Video, Award,
-  Handshake, Hotel, Sparkles, Library, Heart,
+  Handshake, Hotel, Sparkles, Library, Heart, Phone,
   GraduationCap as EduIcon, Store, Target, TrendingUp, Package, Bell,
   ChevronDown, ChevronRight, Bot, Wallet, UserCheck, Globe
 } from 'lucide-react';
@@ -168,13 +168,21 @@ const roleNavItems = {
   ADMIN: [
     { path: '/admin', label: 'War Room', icon: LayoutDashboard },
     {
-      label: 'Users & Orgs', icon: Users, children: [
-        { path: '/admin/users', label: 'Users', icon: Users },
-        { path: '/admin/organizations', label: 'Organizations', icon: Building2 },
-        { path: '/admin/sub-admin', label: 'Create Sub-Admin', icon: Users },
-        { path: '/admin/audit', label: 'Audit Logs', icon: ShieldCheck },
-      ]
-    },
+  label: 'OIE Jobs', icon: Briefcase, children: [
+    { path: '/admin/oie/jobs?tab=jobs', label: 'Jobs', icon: Briefcase },
+    { path: '/admin/oie/jobs?tab=registry', label: 'Job Agents', icon: Building2 },
+    { path: '/admin/oie/jobs?tab=requests', label: 'Requests', icon: MessageSquare },
+    { path: '/admin/oie/jobs?tab=log', label: 'HR Contacts', icon: Phone },
+  ]
+},
+{
+  label: 'OIE Studies', icon: GraduationCap, children: [
+    { path: '/admin/oie/studies?tab=universities', label: 'Universities', icon: GraduationCap },
+    { path: '/admin/oie/studies?tab=registry', label: 'Study Agents', icon: Building2 },
+    { path: '/admin/oie/studies?tab=requests', label: 'Requests', icon: MessageSquare },
+    { path: '/admin/oie/studies?tab=contacts', label: 'Uni Contacts', icon: Phone },
+  ]
+},
     {
       label: 'Education', icon: EduIcon, children: [
         { path: '/admin/education', label: 'Education Control', icon: EduIcon },
