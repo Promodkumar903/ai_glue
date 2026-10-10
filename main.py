@@ -210,8 +210,10 @@ app.include_router(forgot_router)
 app.include_router(journey_router, prefix="/journey", tags=["Student Journey"])
 app.include_router(recommendation_router, prefix="/recommendations", tags=["Recommendations"])
 from engines.communication import router as communication_router
+from engines.interview import router as interview_router, init_interview_table
 app.include_router(communication_router, prefix="/communication", tags=["Communication"])
-
+app.include_router(interview_router, prefix="/interview", tags=["Interview"])
+init_interview_table()
 
 # ============================================================
 # DIRECT ROUTES (???????????? Routers ??????)

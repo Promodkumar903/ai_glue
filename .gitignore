@@ -1,35 +1,84 @@
-venv/
-__pycache__/
-*.pyc
-*.db
-.env
-node_modules/
-*_backup*
-*_old/
-*backup*/
-.DS_Store
-# Secrets
+# ═══════════════════════════════════════════
+# SECRETS — never commit
+# ═══════════════════════════════════════════
 .env
 .env.local
-*.csv
+.env.production
+.env.*.local
+*.key
+*.pem
+secrets.json
 razorpay_test_api_keys_*.csv
 
-# Temp fix files
-fix_*.py
-*_scan/
-
-# Junk (accidental files)
-bool
-str
-python
-notepad
-
-uploads/
-reports/
-*.bak
-check.txt
-cls
-findstr
-git
-main
+# ═══════════════════════════════════════════
+# PYTHON
+# ═══════════════════════════════════════════
+venv/
+.venv/
+env/
+ENV/
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ═══════════════════════════════════════════
+# NODE / FRONTEND
+# ═══════════════════════════════════════════
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ═══════════════════════════════════════════
+# DATABASE (data file — not source)
+# ═══════════════════════════════════════════
+*.db
+*.sqlite
+*.sqlite3
+
+# ═══════════════════════════════════════════
+# BACKUPS (old versions)
+# ═══════════════════════════════════════════
+*_backup*
+*backup*/
+*_old/
+*.bak
+*.bak_hero
+_ARCHIVE_*/
+
+# ═══════════════════════════════════════════
+# LOGS / TEMP
+# ═══════════════════════════════════════════
+*.log
+logs/
+*.tmp
+*.temp
+*.cache
+audit_tree.txt*
+check.txt
+reports/
+uploads/
+
+# ═══════════════════════════════════════════
+# OS / IDE
+# ═══════════════════════════════════════════
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo

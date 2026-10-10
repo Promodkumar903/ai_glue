@@ -73,6 +73,7 @@ const roleNavItems = {
         { path: '/job-seeker/vacancies', label: 'Vacancies', icon: Briefcase },
         { path: '/job-seeker/applications', label: 'My Applications', icon: FileText },
         { path: '/job-seeker/interviews', label: 'Interviews', icon: Video },
+        { path: '/interviews', label: 'Video Interviews', icon: Video },
         { path: '/jobseeker-new/offers', label: 'Offers', icon: Award },
         { path: '/job-seeker/deals', label: 'Deals', icon: Handshake },
       ]
@@ -112,6 +113,7 @@ const roleNavItems = {
     {
       label: 'Visa & Offers', icon: ShieldCheck, children: [
         { path: '/agent/visa', label: 'Visa Tracking', icon: ShieldCheck },
+        { path: '/interviews', label: 'Video Interviews', icon: Video },
         { path: '/jobseeker-new/offers', label: 'Offers', icon: Award },
         { path: '/employer-new/contracts', label: 'Contracts', icon: FileText },
       ]
@@ -158,11 +160,13 @@ const roleNavItems = {
     {
       label: 'Hiring', icon: Briefcase, children: [
         { path: '/employer-new/post-job', label: 'Post Job', icon: Briefcase },
+        { path: '/interviews', label: 'Video Interviews', icon: Video },
         { path: '/employer-new/applicants', label: 'Applicants', icon: Users },
         { path: '/employer-new/contracts', label: 'Contracts', icon: FileText },
       ]
     },
     { path: '/messages', label: 'Messages', icon: MessageSquare },
+    { path: '/interviews', label: 'Video Interviews', icon: Video },
   ],
 
   ADMIN: [

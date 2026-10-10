@@ -23,6 +23,7 @@ import ResumeConverter from './pages/student-new/ResumeConverter';
 import AgentCandidates from './pages/agent-new/Candidates';
 import Leads from './pages/agent-new/Leads';
 import OIEJobs from './pages/admin-new/OIEJobs';
+import JobDetail from './pages/JobDetail';
 import OIEStudies from './pages/admin-new/OIEStudies';
 import AgentCRMDashboard from './pages/agent-new/AgentDashboard';
 import Followups from './pages/agent-new/Followups';
@@ -71,6 +72,9 @@ import BulkOperations from './pages/admin-new/BulkOperations';
 import UploadResume from './pages/jobseeker-new/UploadResume';
 import JobResumeBuilder from './pages/jobseeker-new/JobResumeBuilder';
 import JobSearch from './pages/jobseeker-new/JobSearch';
+import VideoCall from './pages/VideoCall';
+import Interviews from './pages/Interviews';
+import MyJobMatches from './pages/jobseeker-new/MyJobMatches';
 import MyApplications from './pages/jobseeker-new/MyApplications';
 import DocumentsVault from './pages/jobseeker-new/DocumentsVault';
 import Offers from './pages/jobseeker-new/Offers';
@@ -186,6 +190,9 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/search" element={<AdminSearch />} />
         <Route path="/admin/oie/jobs" element={<OIEJobs />} />
+        <Route path="/jobs/:jobId" element={<JobDetail />} />
+        <Route path="/video-call/:roomId" element={<VideoCall />} />
+        <Route path="/interviews" element={<Interviews />} />
         <Route path="/admin/oie/studies" element={<OIEStudies />} />
         <Route path="/admin/oie" element={<OIEJobs />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
@@ -249,6 +256,7 @@ function App() {
         <Route path="/jobseeker-new/resume" element={<UploadResume />} />
         <Route path="/jobseeker-new/resume-builder" element={<JobResumeBuilder />} />
         <Route path="/jobseeker-new/search" element={<JobSearch />} />
+        <Route path="/my-matches" element={<MyJobMatches />} />
         <Route path="/jobseeker-new/applications" element={<MyApplications />} />
         <Route path="/jobseeker-new/documents" element={<DocumentsVault />} />
 
