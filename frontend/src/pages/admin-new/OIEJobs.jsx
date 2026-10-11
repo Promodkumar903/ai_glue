@@ -522,7 +522,26 @@ export default function OIEJobs() {
                 {verifiedJobs.map(j => (
                   <tr key={j.id} className="border-t border-slate-100 hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium">{j.company_name}</td>
-                    <td className="px-4 py-3 text-slate-600">{j.job_title}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {j.source_tier === 1 && (
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold" title="Official Government Source">
+                            🟢 Official
+                          </span>
+                        )}
+                        {j.source_tier === 2 && (
+                          <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full font-semibold" title="Cross-verified">
+                            🟡 Verified
+                          </span>
+                        )}
+                        {j.source_tier === 3 && (
+                          <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-semibold" title="Aggregator — needs verification">
+                            🟠 Aggregator
+                          </span>
+                        )}
+                        <span className="text-slate-600 text-sm">{j.job_title}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span className="text-xs px-2 py-0.5 bg-slate-100 rounded">{j.country}</span>
                     </td>

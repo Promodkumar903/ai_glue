@@ -86,8 +86,20 @@ export default function JobDetail() {
                 {initials}
               </div>
               <div>
-                <div className="text-xs uppercase tracking-wide text-purple-200 mb-1">
-                  Verified Job
+                  <div className="flex items-center gap-2 mb-1">
+                  <div className="text-xs uppercase tracking-wide text-purple-200">
+                    Verified Job
+                  </div>
+                  {job.source_tier === 1 && (
+                    <span className="text-xs px-2 py-0.5 bg-green-500 text-white rounded-full font-bold">
+                      🟢 OFFICIAL
+                    </span>
+                  )}
+                  {job.source_tier === 3 && (
+                    <span className="text-xs px-2 py-0.5 bg-orange-500 text-white rounded-full font-bold">
+                      🟠 VERIFIED
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-2xl font-bold">{job.job_title}</h1>
                 <div className="text-sm text-purple-100 mt-1">{job.company_name}</div>

@@ -391,7 +391,8 @@ def list_verified_jobs(
     offset = (page - 1) * limit
     rows = cur.execute(
         f"""SELECT id, company_name, job_title, country, region,
-                   verification_score, job_url, verified_at, no_commission
+                   verification_score, job_url, verified_at, no_commission,
+                   source_tier, ats_platform
             FROM verified_jobs{where_clause}
             ORDER BY verified_at DESC
             LIMIT ? OFFSET ?""",
@@ -510,7 +511,7 @@ def my_matches(user_id: str, limit: int = 50, min_score: int = 30, country: str 
     # Get verified jobs (filtered)
     q = """SELECT id, company_name, job_title, country, region,
                   free_visa, free_ticket, accommodation, no_commission,
-                  verification_score, job_url, verified_at,
+                  verification_score, job_url, verified_at, source_tier,
                   MIN(id) as id
            FROM verified_jobs WHERE status='VERIFIED'"""
     params = []

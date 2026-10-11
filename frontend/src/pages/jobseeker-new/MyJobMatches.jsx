@@ -163,7 +163,19 @@ export default function MyJobMatches() {
                   <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm">
                     {getInitials(job.company_name)}
                   </div>
-                  <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      {job.source_tier === 1 && (
+                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-semibold">
+                          🟢 Official Source
+                        </span>
+                      )}
+                      {job.source_tier === 3 && (
+                        <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-semibold">
+                          🟠 Verified
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-bold text-slate-900 truncate text-base">
                       {job.job_title}
                     </h3>

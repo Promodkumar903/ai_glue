@@ -64,7 +64,7 @@ import TermsOfService from './pages/TermsOfService';
 import ComingSoon from './pages/ComingSoon';
 
 // ⚠️ MAINTENANCE MODE — set to true to show Coming Soon page
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 // ========== NEW ADMIN PAGES ==========
 import EducationControl from './pages/admin-new/EducationControl';
 import VendorControl from './pages/admin-new/VendorControl';
