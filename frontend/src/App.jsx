@@ -61,6 +61,10 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import ComingSoon from './pages/ComingSoon';
+
+// ⚠️ MAINTENANCE MODE — set to true to show Coming Soon page
+const MAINTENANCE_MODE = true;
 // ========== NEW ADMIN PAGES ==========
 import EducationControl from './pages/admin-new/EducationControl';
 import VendorControl from './pages/admin-new/VendorControl';
@@ -165,6 +169,11 @@ function App() {
   }
 
   const rolePath = user?.role?.toLowerCase().replace('_', '-') || 'student';
+
+  // Maintenance mode: block entire app
+  if (MAINTENANCE_MODE) {
+    return <ComingSoon />;
+  }
 
   return (
     <Routes>
