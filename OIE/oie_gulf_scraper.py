@@ -26,7 +26,9 @@ BLUE_COLLAR_KEYWORDS = [
 
 # Gulf search URLs (multiple pages per category)
 BAYT_SEARCHES = [
-    # UAE
+    # ═══════════════════════════════════════════
+    # UAE — सबसे बड़ा market
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/uae/jobs/driver-jobs/", "UAE", "Driver"),
     ("https://www.bayt.com/en/uae/jobs/construction-jobs/", "UAE", "Construction"),
     ("https://www.bayt.com/en/uae/jobs/security-jobs/", "UAE", "Security"),
@@ -37,24 +39,95 @@ BAYT_SEARCHES = [
     ("https://www.bayt.com/en/uae/jobs/welder-jobs/", "UAE", "Welder"),
     ("https://www.bayt.com/en/uae/jobs/electrician-jobs/", "UAE", "Electrician"),
     ("https://www.bayt.com/en/uae/jobs/mechanic-jobs/", "UAE", "Mechanic"),
-    # Saudi Arabia
+    ("https://www.bayt.com/en/uae/jobs/housekeeping-jobs/", "UAE", "Housekeeping"),
+    ("https://www.bayt.com/en/uae/jobs/nurse-jobs/", "UAE", "Nurse"),
+    ("https://www.bayt.com/en/uae/jobs/delivery-driver-jobs/", "UAE", "Delivery Driver"),
+    ("https://www.bayt.com/en/uae/jobs/steel-fixer-jobs/", "UAE", "Steel Fixer"),
+    ("https://www.bayt.com/en/uae/jobs/mep-technician-jobs/", "UAE", "MEP Technician"),
+    ("https://www.bayt.com/en/uae/jobs/pipe-fitter-jobs/", "UAE", "Pipe Fitter"),
+    ("https://www.bayt.com/en/uae/jobs/ac-technician-jobs/", "UAE", "AC Technician"),
+    ("https://www.bayt.com/en/uae/jobs/painter-jobs/", "UAE", "Painter"),
+    ("https://www.bayt.com/en/uae/jobs/mason-jobs/", "UAE", "Mason"),
+    ("https://www.bayt.com/en/uae/jobs/factory-worker-jobs/", "UAE", "Factory Worker"),
+    ("https://www.bayt.com/en/uae/jobs/storekeeper-jobs/", "UAE", "Storekeeper"),
+    ("https://www.bayt.com/en/uae/jobs/waiter-jobs/", "UAE", "Waiter"),
+    ("https://www.bayt.com/en/uae/jobs/baker-jobs/", "UAE", "Baker"),
+    ("https://www.bayt.com/en/uae/jobs/butcher-jobs/", "UAE", "Butcher"),
+    ("https://www.bayt.com/en/uae/jobs/barber-jobs/", "UAE", "Barber"),
+    ("https://www.bayt.com/en/uae/jobs/gardener-jobs/", "UAE", "Gardener"),
+    ("https://www.bayt.com/en/uae/jobs/laundry-jobs/", "UAE", "Laundry"),
+    ("https://www.bayt.com/en/uae/jobs/kitchen-helper-jobs/", "UAE", "Kitchen Helper"),
+    ("https://www.bayt.com/en/uae/jobs/forklift-operator-jobs/", "UAE", "Forklift"),
+    ("https://www.bayt.com/en/uae/jobs/heavy-equipment-operator-jobs/", "UAE", "Heavy Equipment"),
+    ("https://www.bayt.com/en/uae/jobs/scaffolder-jobs/", "UAE", "Scaffolder"),
+    ("https://www.bayt.com/en/uae/jobs/tiler-jobs/", "UAE", "Tiler"),
+    ("https://www.bayt.com/en/uae/jobs/plumber-jobs/", "UAE", "Plumber"),
+    ("https://www.bayt.com/en/uae/jobs/aluminium-fitter-jobs/", "UAE", "Aluminium Fitter"),
+    ("https://www.bayt.com/en/uae/jobs/auto-mechanic-jobs/", "UAE", "Auto Mechanic"),
+    
+    # ═══════════════════════════════════════════
+    # SAUDI ARABIA
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/saudi-arabia/jobs/driver-jobs/", "Saudi Arabia", "Driver"),
     ("https://www.bayt.com/en/saudi-arabia/jobs/construction-jobs/", "Saudi Arabia", "Construction"),
     ("https://www.bayt.com/en/saudi-arabia/jobs/warehouse-jobs/", "Saudi Arabia", "Warehouse"),
     ("https://www.bayt.com/en/saudi-arabia/jobs/technician-jobs/", "Saudi Arabia", "Technician"),
     ("https://www.bayt.com/en/saudi-arabia/jobs/security-jobs/", "Saudi Arabia", "Security"),
-    # Qatar
+    ("https://www.bayt.com/en/saudi-arabia/jobs/electrician-jobs/", "Saudi Arabia", "Electrician"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/mechanic-jobs/", "Saudi Arabia", "Mechanic"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/welder-jobs/", "Saudi Arabia", "Welder"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/nurse-jobs/", "Saudi Arabia", "Nurse"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/steel-fixer-jobs/", "Saudi Arabia", "Steel Fixer"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/pipe-fitter-jobs/", "Saudi Arabia", "Pipe Fitter"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/mason-jobs/", "Saudi Arabia", "Mason"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/painter-jobs/", "Saudi Arabia", "Painter"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/cleaner-jobs/", "Saudi Arabia", "Cleaner"),
+    ("https://www.bayt.com/en/saudi-arabia/jobs/cook-jobs/", "Saudi Arabia", "Cook"),
+    
+    # ═══════════════════════════════════════════
+    # QATAR
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/qatar/jobs/driver-jobs/", "Qatar", "Driver"),
     ("https://www.bayt.com/en/qatar/jobs/construction-jobs/", "Qatar", "Construction"),
     ("https://www.bayt.com/en/qatar/jobs/warehouse-jobs/", "Qatar", "Warehouse"),
-    # Kuwait
+    ("https://www.bayt.com/en/qatar/jobs/security-jobs/", "Qatar", "Security"),
+    ("https://www.bayt.com/en/qatar/jobs/technician-jobs/", "Qatar", "Technician"),
+    ("https://www.bayt.com/en/qatar/jobs/electrician-jobs/", "Qatar", "Electrician"),
+    ("https://www.bayt.com/en/qatar/jobs/welder-jobs/", "Qatar", "Welder"),
+    ("https://www.bayt.com/en/qatar/jobs/mason-jobs/", "Qatar", "Mason"),
+    ("https://www.bayt.com/en/qatar/jobs/cook-jobs/", "Qatar", "Cook"),
+    ("https://www.bayt.com/en/qatar/jobs/cleaner-jobs/", "Qatar", "Cleaner"),
+    
+    # ═══════════════════════════════════════════
+    # KUWAIT
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/kuwait/jobs/driver-jobs/", "Kuwait", "Driver"),
     ("https://www.bayt.com/en/kuwait/jobs/construction-jobs/", "Kuwait", "Construction"),
-    # Oman
+    ("https://www.bayt.com/en/kuwait/jobs/warehouse-jobs/", "Kuwait", "Warehouse"),
+    ("https://www.bayt.com/en/kuwait/jobs/technician-jobs/", "Kuwait", "Technician"),
+    ("https://www.bayt.com/en/kuwait/jobs/security-jobs/", "Kuwait", "Security"),
+    ("https://www.bayt.com/en/kuwait/jobs/cleaner-jobs/", "Kuwait", "Cleaner"),
+    ("https://www.bayt.com/en/kuwait/jobs/cook-jobs/", "Kuwait", "Cook"),
+    ("https://www.bayt.com/en/kuwait/jobs/nurse-jobs/", "Kuwait", "Nurse"),
+    
+    # ═══════════════════════════════════════════
+    # OMAN
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/oman/jobs/driver-jobs/", "Oman", "Driver"),
     ("https://www.bayt.com/en/oman/jobs/construction-jobs/", "Oman", "Construction"),
-    # Bahrain
+    ("https://www.bayt.com/en/oman/jobs/warehouse-jobs/", "Oman", "Warehouse"),
+    ("https://www.bayt.com/en/oman/jobs/technician-jobs/", "Oman", "Technician"),
+    ("https://www.bayt.com/en/oman/jobs/security-jobs/", "Oman", "Security"),
+    ("https://www.bayt.com/en/oman/jobs/cook-jobs/", "Oman", "Cook"),
+    
+    # ═══════════════════════════════════════════
+    # BAHRAIN
+    # ═══════════════════════════════════════════
     ("https://www.bayt.com/en/bahrain/jobs/driver-jobs/", "Bahrain", "Driver"),
+    ("https://www.bayt.com/en/bahrain/jobs/construction-jobs/", "Bahrain", "Construction"),
+    ("https://www.bayt.com/en/bahrain/jobs/security-jobs/", "Bahrain", "Security"),
+    ("https://www.bayt.com/en/bahrain/jobs/cleaner-jobs/", "Bahrain", "Cleaner"),
+    ("https://www.bayt.com/en/bahrain/jobs/warehouse-jobs/", "Bahrain", "Warehouse"),
 ]
 
 NAUKRI_SEARCHES = [

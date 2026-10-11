@@ -82,3 +82,30 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# ═══════════════════════════════════════════
+# CONFIDENTIAL — not for Git
+# ═══════════════════════════════════════════
+AI_Glue_Project_Documentation.pdf
+AI_Glue_Project_Documentation.txt
+generate_docs.py
+generate_pdf.py
+docs_structure.txt
+CA_Letter_Draft.txt
+_project_scan/
+
+# Utility scripts (dev tools, not production)
+OIE/clean_junk_jobs.py
+OIE/clean_old_office.py
+OIE/convert_logo.py
+OIE/convert_logo_dark.py
+OIE/delete_arbeitnow_office.py
+OIE/fix_endpoint.py
+OIE/fix_hostels.py
+OIE/fix_pr_column.py
+OIE/fix_verified_dupes.py
+OIE/inspect_oie_db.py
+OIE/oie_germany_ba.py
+OIE/oie_workindenmark.py
+OIE/test_email.py
+OIE/test_real_email.py
